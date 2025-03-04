@@ -44,7 +44,12 @@ const colors = {
 };
 
 const FormPage = () => {
+  const [projectTitle, setProjectTitle] = useState("");
+  const [faculty, setFaculty] = useState("");
+  const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
+  const [teamLeaderPhone, setTeamLeaderPhone] = useState("");
   const [hasPrototype, setHasPrototype] = useState(false);
+  const [prototypeDimensions, setPrototypeDimensions] = useState("");
   const [projectCategory, setProjectCategory] = useState("");
   const [projectTrack, setProjectTrack] = useState("");
   const [otherCategory, setOtherCategory] = useState("");
@@ -71,6 +76,12 @@ const FormPage = () => {
       lunch: false,
     },
   ]);
+
+  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
+  const validateEgyptianPhoneNumber = (phone) =>
+    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEgyptianNationalId = (id) => /^\d{14}$/.test(id);
 
   const handleAddMember = () => {
     if (members.length < 7) {
@@ -128,18 +139,39 @@ const FormPage = () => {
     const newErrors = {};
 
     // Project Title
-    const projectTitle = document.querySelector(
-      'input[placeholder="Enter your project title"]'
-    ).value;
     if (!projectTitle.trim()) {
       newErrors.projectTitle = "Project title is required.";
+    } else if (projectTitle.trim().length < 3) {
+      newErrors.projectTitle =
+        "Project title must be at least 3 characters long.";
+    }
+
+    // Faculty
+    if (!faculty.trim()) {
+      newErrors.faculty = "Faculty is required.";
+    } else if (faculty.trim().length < 3) {
+      newErrors.faculty = "Faculty must be at least 3 characters long.";
+    }
+
+    // Project Abstract
+    if (!projectAbstract.trim()) {
+      newErrors.projectAbstract = "Project abstract is required.";
+    } else if (projectAbstract.trim().length < 10) {
+      newErrors.projectAbstract =
+        "Project abstract must be at least 10 characters long.";
+    }
+
+    // Prototype Dimensions
+    if (hasPrototype && !prototypeDimensions.trim()) {
+      newErrors.prototypeDimensions = "Prototype dimensions are required.";
     }
 
     // Project Category
-    if (!projectCategory)
+    if (!projectCategory) {
       newErrors.projectCategory = "Project category is required.";
-    if (projectCategory === "Other" && !otherCategory.trim())
+    } else if (projectCategory === "Other" && !otherCategory.trim()) {
       newErrors.otherCategory = "Please specify the category.";
+    }
 
     // Project Track
     if (!projectTrack) {
@@ -148,24 +180,42 @@ const FormPage = () => {
       newErrors.otherTrack = "Please specify the track.";
     }
 
+    // Team Leader Email
+    if (!teamLeaderEmail.trim()) {
+      newErrors.teamLeaderEmail = "Team leader's email is required.";
+    } else if (!validateEmail(teamLeaderEmail)) {
+      newErrors.teamLeaderEmail = "Invalid email format for team leader.";
+    }
+
+    // Team Leader Phone
+    if (!teamLeaderPhone.trim()) {
+      newErrors.teamLeaderPhone = "Team leader's WhatsApp number is required.";
+    } else if (!validateEgyptianPhoneNumber(teamLeaderPhone)) {
+      newErrors.teamLeaderPhone = "Invalid WhatsApp number for team leader.";
+    }
+
     // Members Validation
     members.forEach((member, index) => {
-      if (!validateName(member.name))
+      if (!validateName(member.name)) {
         newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
         } name is required.`;
-      if (!validateEgyptianPhoneNumber(member.phone))
+      }
+      if (!validateEgyptianPhoneNumber(member.phone)) {
         newErrors[
           `member${index + 1}Phone`
         ] = `Invalid phone number for member ${index + 1}.`;
-      if (!validateEmail(member.email))
+      }
+      if (!validateEmail(member.email)) {
         newErrors[
           `member${index + 1}Email`
         ] = `Invalid email format for member ${index + 1}.`;
-      if (!validateEgyptianNationalId(member.nationalId))
+      }
+      if (!validateEgyptianNationalId(member.nationalId)) {
         newErrors[
           `member${index + 1}NationalId`
         ] = `Invalid national ID for member ${index + 1}.`;
+      }
     });
 
     setErrors(newErrors);
@@ -178,6 +228,12 @@ const FormPage = () => {
     setProjectTrack("");
     setOtherCategory("");
     setOtherTrack("");
+    setProjectTitle("");
+    setFaculty("");
+    setTeamLeaderEmail("");
+    setTeamLeaderPhone("");
+    setProjectAbstract("");
+    setPrototypeDimensions("");
     setErrors({});
     setMembers([
       {
@@ -199,9 +255,6 @@ const FormPage = () => {
         lunch: false,
       },
     ]);
-
-    const form = document.querySelector("form");
-    form.reset();
   };
 
   const handleSubmit = (e) => {
@@ -309,10 +362,9 @@ const FormPage = () => {
             type="text"
             placeholder="Enter your project title"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
-            style={{
-              borderColor: colors.lightGreen,
-              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-            }}
+            style={{ borderColor: colors.lightGreen }}
+            value={projectTitle}
+            onChange={(e) => setProjectTitle(e.target.value)}
             required
           />
           {errors.projectTitle && (
@@ -471,14 +523,22 @@ const FormPage = () => {
                 className="block text-sm font-medium mb-1"
                 style={{ color: colors.darkNeutral }}
               >
-                Prototype Dimensions
+                Prototype Dimensions *
               </label>
               <input
                 type="text"
                 placeholder="Enter prototype dimensions"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
+                value={prototypeDimensions}
+                onChange={(e) => setPrototypeDimensions(e.target.value)}
+                required
               />
+              {errors.prototypeDimensions && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.prototypeDimensions}
+                </p>
+              )}
             </motion.div>
           )}
         </motion.div>
@@ -588,8 +648,13 @@ const FormPage = () => {
             placeholder="Enter your faculty name"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
             style={{ borderColor: colors.lightGreen }}
+            value={faculty}
+            onChange={(e) => setFaculty(e.target.value)}
             required
           />
+          {errors.faculty && (
+            <p className="text-sm text-red-500 mt-1">{errors.faculty}</p>
+          )}
         </motion.div>
 
         {/* Red Note */}
@@ -828,8 +893,10 @@ const FormPage = () => {
               <input
                 type="email"
                 placeholder="Team leader's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
+                value={teamLeaderEmail}
+                onChange={(e) => setTeamLeaderEmail(e.target.value)}
                 required
               />
               {errors.teamLeaderEmail && (
@@ -848,8 +915,10 @@ const FormPage = () => {
               <input
                 type="tel"
                 placeholder="Team leader's WhatsApp"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
+                value={teamLeaderPhone}
+                onChange={(e) => setTeamLeaderPhone(e.target.value)}
                 required
               />
               {errors.teamLeaderPhone && (

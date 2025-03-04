@@ -1,5 +1,5 @@
 import React from "react";
-import Form from "./Forms/SchoolsProjects";
+import Form from "./Forms/preGraduation";
 
 function App() {
   return (
