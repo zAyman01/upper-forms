@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import {
+  FaCode,
+  FaCogs,
+  FaFileAlt,
+  FaWrench,
+  FaSatelliteDish,
+  FaRocket,
+} from "react-icons/fa";
+
+const icons = [FaCode, FaCogs, FaFileAlt, FaWrench, FaSatelliteDish, FaRocket];
 
 const EducationalAdministrations = [
   "Aswan",
@@ -31,11 +41,16 @@ const TechnicalFormSubmission = () => {
   const [educationalAdministration, setEducationalAdministration] =
     useState("");
   const [school, setSchool] = useState("");
-  const [member1Name, setMember1Name] = useState("");
-  const [member1Phone, setMember1Phone] = useState("");
-  const [member1Email, setMember1Email] = useState("");
-  const [member1NationalId, setMember1NationalId] = useState("");
-  const [member1Accommodation, setMember1Accommodation] = useState(false);
+  const [members, setMembers] = useState([
+    {
+      id: 1,
+      name: "",
+      phone: "",
+      email: "",
+      nationalId: "",
+      accommodation: false,
+    },
+  ]);
   const [supervisorName, setSupervisorName] = useState("");
   const [supervisorPhone, setSupervisorPhone] = useState("");
   const [supervisorEmail, setSupervisorEmail] = useState("");
@@ -46,38 +61,50 @@ const TechnicalFormSubmission = () => {
   const [errors, setErrors] = useState({});
   const [floatingCircles, setFloatingCircles] = useState([]);
 
-  useEffect(() => {
-    const generateCircles = () => {
-      const circles = [];
-      const circleColors = [
-        colors.primary,
-        colors.darkGreen,
-        colors.accentGreen,
-        colors.lightGreen,
-      ];
-
-      for (let i = 0; i < 15; i++) {
-        circles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 80 + 20,
-          color: circleColors[Math.floor(Math.random() * circleColors.length)],
-          duration: Math.random() * 10 + 5,
-          delay: Math.random() * 2,
-        });
-      }
-      setFloatingCircles(circles);
-    };
-
-    generateCircles();
-  }, []);
-
   const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
   const validateEgyptianPhoneNumber = (phone) =>
     /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validateNationalId = (id) => /^\d{14}$/.test(id);
+
+  const handleAddMember = () => {
+    if (members.length < 5) {
+      setMembers([
+        ...members,
+        {
+          id: members.length + 1,
+          name: "",
+          phone: "",
+          email: "",
+          nationalId: "",
+          accommodation: false,
+        },
+      ]);
+    }
+  };
+
+  const handleRemoveMember = (id) => {
+    setMembers(members.filter((member) => member.id !== id));
+  };
+
+  const handleMemberChange = (index, field, value) => {
+    const updatedMembers = [...members];
+    updatedMembers[index][field] = value;
+    setMembers(updatedMembers);
+  };
+
+  const handleAccommodationChange = (index) => {
+    const updatedMembers = [...members];
+    const currentAccommodationCount = updatedMembers.filter(
+      (member) => member.accommodation
+    ).length;
+
+    if (currentAccommodationCount < 2 || updatedMembers[index].accommodation) {
+      updatedMembers[index].accommodation =
+        !updatedMembers[index].accommodation;
+      setMembers(updatedMembers);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -107,15 +134,25 @@ const TechnicalFormSubmission = () => {
     if (!validateName(school))
       newErrors.school = "School is required and must be at least 3 letters.";
 
-    if (!validateName(member1Name))
-      newErrors.member1Name =
-        "Member 1 name is required and must be at least 3 letters.";
-    if (!validateEgyptianPhoneNumber(member1Phone))
-      newErrors.member1Phone = "Invalid Egyptian phone number.";
-    if (!validateEmail(member1Email))
-      newErrors.member1Email = "Invalid email format.";
-    if (!validateNationalId(member1NationalId))
-      newErrors.member1NationalId = "Invalid national ID.";
+    // Members Validation
+    members.forEach((member, index) => {
+      if (!validateName(member.name))
+        newErrors[`member${index + 1}Name`] = `Member ${
+          index + 1
+        } name is required.`;
+      if (!validateEgyptianPhoneNumber(member.phone))
+        newErrors[
+          `member${index + 1}Phone`
+        ] = `Invalid phone number for member ${index + 1}.`;
+      if (!validateEmail(member.email))
+        newErrors[
+          `member${index + 1}Email`
+        ] = `Invalid email format for member ${index + 1}.`;
+      if (!validateNationalId(member.nationalId))
+        newErrors[
+          `member${index + 1}NationalId`
+        ] = `Invalid national ID for member ${index + 1}.`;
+    });
 
     if (!validateName(supervisorName))
       newErrors.supervisorName =
@@ -140,30 +177,39 @@ const TechnicalFormSubmission = () => {
     e.preventDefault();
     if (validateForm()) {
       alert("Form submitted successfully!");
-      setProjectTitle("");
-      setProjectCategory("");
-      setOtherCategory("");
-      setHasPrototype(false);
-      setPrototypeDimensions("");
-      setProjectAbstract("");
-      setEducationalAdministration("");
-      setSchool("");
-      setMember1Name("");
-      setMember1Phone("");
-      setMember1Email("");
-      setMember1NationalId("");
-      setMember1Accommodation(false);
-      setSupervisorName("");
-      setSupervisorPhone("");
-      setSupervisorEmail("");
-      setSupervisorNationalId("");
-      setSupervisorAccommodation(false);
-      setTeamLeaderEmail("");
-      setTeamLeaderWhatsApp("");
-      setErrors({});
+      resetForm();
     } else {
       console.log("Form has errors. Please fix them.");
     }
+  };
+
+  const resetForm = () => {
+    setProjectTitle("");
+    setProjectCategory("");
+    setOtherCategory("");
+    setHasPrototype(false);
+    setPrototypeDimensions("");
+    setProjectAbstract("");
+    setEducationalAdministration("");
+    setSchool("");
+    setMembers([
+      {
+        id: 1,
+        name: "",
+        phone: "",
+        email: "",
+        nationalId: "",
+        accommodation: false,
+      },
+    ]);
+    setSupervisorName("");
+    setSupervisorPhone("");
+    setSupervisorEmail("");
+    setSupervisorNationalId("");
+    setSupervisorAccommodation(false);
+    setTeamLeaderEmail("");
+    setTeamLeaderWhatsApp("");
+    setErrors({});
   };
 
   return (
@@ -174,40 +220,47 @@ const TechnicalFormSubmission = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {floatingCircles.map((circle) => (
+      {/* Floating Technical Icons */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const Icon = icons[i % icons.length];
+        const size = Math.random() * 60 + 30;
+        const color = `rgb(114, 178, 125, ${Math.random() * 0.5 + 0.3})`;
+
+        return (
           <motion.div
-            key={circle.id}
-            className="absolute rounded-full opacity-40"
+            key={i}
+            className="absolute"
             style={{
-              left: `${circle.x}%`,
-              top: `${circle.y}%`,
-              width: `${circle.size}px`,
-              height: `${circle.size}px`,
-              backgroundColor: circle.color,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              opacity: 0.4,
+              color,
             }}
             animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, Math.random() + 0.5, 1],
-              rotate: [0, Math.random() * 360, 0],
+              scale: [1, 1.5, 1],
+              rotate: [0, 30, -30, 0],
+              opacity: [0.6, 0.3, 0.6],
+              filter: ["blur(2px)", "blur(6px)", "blur(2px)"],
+              x: [0, 40, -40, 0],
+              y: [0, -40, 40, 0],
             }}
             transition={{
-              duration: circle.duration,
+              duration: Math.random() * 4 + 8,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: circle.delay,
+              delay: Math.random() * 3,
             }}
-          />
-        ))}
-      </div>
+          >
+            <Icon size={size} />
+          </motion.div>
+        );
+      })}
 
       {/* Gradient overlay */}
       <div
         className="absolute inset-0 opacity-50"
         style={{
-          background: `linear-gradient(135deg, ${colors.primary}22, ${colors.accentGreen}33, ${colors.warmNeutral}22)`,
+          background: `linear-gradient(135deg, ${colors.primary}22, ${colors.lightGreen}33, ${colors.darkNeutral}22)`,
         }}
       ></div>
 
@@ -226,7 +279,7 @@ const TechnicalFormSubmission = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          Technical Form Submission
+          Technical Projects Form
         </motion.h2>
 
         <motion.div
@@ -247,7 +300,7 @@ const TechnicalFormSubmission = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: '#000000' }}
+            style={{ color: colors.darkNeutral }}
           >
             Project Title *
           </label>
@@ -255,10 +308,7 @@ const TechnicalFormSubmission = () => {
             type="text"
             placeholder="Enter your project title"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-            style={{
-              borderColor: colors.lightGreen,
-              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-            }}
+            style={{ borderColor: colors.lightGreen }}
             value={projectTitle}
             onChange={(e) => setProjectTitle(e.target.value)}
             required
@@ -293,7 +343,7 @@ const TechnicalFormSubmission = () => {
             <option value="">Select Category</option>
             <option>Power and Green Environment</option>
             <option>Information and Communications Technology</option>
-            <option>Other</option>
+            <option value="Other">Other</option>
           </select>
           {projectCategory === "Other" && (
             <motion.div
@@ -302,15 +352,9 @@ const TechnicalFormSubmission = () => {
               animate={{ height: "auto", opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Specify Category *
-              </label>
               <input
                 type="text"
-                placeholder="Enter your project category"
+                placeholder="Specify category"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
                 value={otherCategory}
@@ -374,9 +418,7 @@ const TechnicalFormSubmission = () => {
                 type="text"
                 placeholder="Enter prototype dimensions"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-                style={{
-                  borderColor: colors.lightGreen,
-                }}
+                style={{ borderColor: colors.lightGreen }}
                 value={prototypeDimensions}
                 onChange={(e) => setPrototypeDimensions(e.target.value)}
               />
@@ -472,139 +514,200 @@ const TechnicalFormSubmission = () => {
           )}
         </motion.div>
 
-        {/* Member #1 */}
+        {/* Red Note */}
         <motion.div
-          className="space-y-4 pt-4"
-          style={{ borderTop: `2px solid ${colors.lightGreen}` }}
+          className="text-center text-sm text-red-500 pt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 1.3 }}
+          style={{ borderTop: `2px solid ${colors.lightGreen}` }}
         >
-          <motion.h3
-            className="text-xl font-semibold"
-            style={{ color: colors.primary }}
-            whileHover={{ x: 5 }}
-          >
-            Member #1
-          </motion.h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Name *
-              </label>
-              <input
-                type="text"
-                placeholder="Enter member's name"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={member1Name}
-                onChange={(e) => setMember1Name(e.target.value)}
-                required
-              />
-              {errors.member1Name && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Name}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                placeholder="Enter member's phone number"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={member1Phone}
-                onChange={(e) => setMember1Phone(e.target.value)}
-                required
-              />
-              {errors.member1Phone && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Phone}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                placeholder="Enter member's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={member1Email}
-                onChange={(e) => setMember1Email(e.target.value)}
-                required
-              />
-              {errors.member1Email && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Email}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                National ID *
-              </label>
-              <input
-                type="text"
-                placeholder="Enter member's national ID"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={member1NationalId}
-                onChange={(e) => setMember1NationalId(e.target.value)}
-                required
-              />
-              {errors.member1NationalId && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1NationalId}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              style={{ color: colors.darkNeutral }}
-            >
-              Additional for Member #1
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
-                  style={{ color: colors.primary }}
-                  checked={member1Accommodation}
-                  onChange={(e) => setMember1Accommodation(e.target.checked)}
-                />
-                <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                  Accommodation (free for 2 members)
-                </span>
-              </label>
-            </div>
-          </div>
+          Note: Free accommodation is only available for 2 members.
         </motion.div>
+
+        {/* Members Details */}
+        {members.map((member, index) => (
+          <motion.div
+            key={member.id}
+            className="space-y-4 pt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.1 + index * 0.1 }}
+          >
+            <motion.h3
+              className="text-xl font-semibold"
+              style={{
+                color: index % 2 === 0 ? colors.primary : colors.accentGreen,
+              }}
+              whileHover={{ x: 5 }}
+            >
+              Member #{index + 1}
+            </motion.h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: colors.darkNeutral }}
+                >
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter member's name"
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
+                  style={{ borderColor: colors.lightGreen }}
+                  value={member.name}
+                  onChange={(e) =>
+                    handleMemberChange(index, "name", e.target.value)
+                  }
+                  required
+                />
+                {errors[`member${index + 1}Name`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors[`member${index + 1}Name`]}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: colors.darkNeutral }}
+                >
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Enter member's phone number"
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
+                  style={{ borderColor: colors.lightGreen }}
+                  value={member.phone}
+                  onChange={(e) =>
+                    handleMemberChange(index, "phone", e.target.value)
+                  }
+                  required
+                />
+                {errors[`member${index + 1}Phone`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors[`member${index + 1}Phone`]}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: colors.darkNeutral }}
+                >
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter member's email"
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
+                  style={{ borderColor: colors.lightGreen }}
+                  value={member.email}
+                  onChange={(e) =>
+                    handleMemberChange(index, "email", e.target.value)
+                  }
+                  required
+                />
+                {errors[`member${index + 1}Email`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors[`member${index + 1}Email`]}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: colors.darkNeutral }}
+                >
+                  National ID *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter member's national ID"
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#72B27D] hover:shadow-md"
+                  style={{ borderColor: colors.lightGreen }}
+                  value={member.nationalId}
+                  onChange={(e) =>
+                    handleMemberChange(index, "nationalId", e.target.value)
+                  }
+                  required
+                />
+                {errors[`member${index + 1}NationalId`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors[`member${index + 1}NationalId`]}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label
+                className="block text-sm font-medium mb-1"
+                style={{ color: colors.darkNeutral }}
+              >
+                Additional for Member #{index + 1}
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
+                    style={{ color: colors.primary }}
+                    checked={member.accommodation}
+                    onChange={() => handleAccommodationChange(index)}
+                    disabled={
+                      !member.accommodation &&
+                      members.filter((m) => m.accommodation).length >= 2
+                    }
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Accommodation (free for 2 members)
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Remove Member Button*/}
+            {index >= 1 && (
+              <button
+                type="button"
+                className="text-sm text-red-500 hover:text-red-700"
+                onClick={() => handleRemoveMember(member.id)}
+              >
+                Remove Member
+              </button>
+            )}
+          </motion.div>
+        ))}
+
+        {/* Add Member Button */}
+        {members.length < 5 && (
+          <motion.div
+            className="flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 + members.length * 0.1 }}
+          >
+            <button
+              type="button"
+              className="px-4 py-2 text-white font-semibold rounded-lg transition-all"
+              style={{
+                background: `linear-gradient(to right, ${colors.primary}, ${colors.accentGreen})`,
+                cursor: "pointer",
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddMember}
+            >
+              Add Member
+            </button>
+          </motion.div>
+        )}
 
         {/* Supervisor */}
         <motion.div
@@ -612,7 +715,7 @@ const TechnicalFormSubmission = () => {
           style={{ borderTop: `2px solid ${colors.lightGreen}` }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 1.4 }}
         >
           <motion.h3
             className="text-xl font-semibold"
@@ -732,52 +835,18 @@ const TechnicalFormSubmission = () => {
                   onChange={(e) => setSupervisorAccommodation(e.target.checked)}
                 />
                 <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                  Accommodation (free for 2 members)
+                  Accommodation
                 </span>
               </label>
             </div>
           </div>
         </motion.div>
 
-        {/* Upload Excel Sheet */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }}
-          >
-            Upload Excel Sheet for Additional Members *
-          </label>
-          <div
-            className="flex items-center justify-center w-full border-2 border-dashed rounded-lg p-6 transition-all"
-            style={{
-              borderColor: colors.primary + "77",
-              backgroundColor: colors.warmNeutral,
-            }}
-          >
-            <input
-              type="file"
-              className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[transparent] file:text-[#72B27D] hover:file:bg-[#72B27D] hover:file:text-white transition-all"
-              style={{
-                color: colors.primary,
-              }}
-              accept=".xlsx, .xls"
-              required
-            />
-          </div>
-          <p className="mt-2 text-sm" style={{ color: colors.primary }}>
-            Max 10 MB
-          </p>
-        </motion.div>
-
         {/* Contact Information - Supervisor */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.1 }}
+          transition={{ delay: 1.6 }}
           className="p-4 rounded-lg"
           style={{ backgroundColor: colors.warmNeutral }}
         >

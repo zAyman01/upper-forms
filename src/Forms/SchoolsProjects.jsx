@@ -1,5 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import {
+  FaGraduationCap,
+  FaSchool,
+  FaChalkboardTeacher,
+  FaBook,
+  FaPencilRuler,
+  FaGlobe,
+} from "react-icons/fa";
+
+const icons = [
+  FaSchool,
+  FaChalkboardTeacher,
+  FaBook,
+  FaPencilRuler,
+  FaGlobe,
+  FaGraduationCap,
+];
+
 
 const colors = {
   primary: "#937DB2",
@@ -43,32 +61,6 @@ const SchoolProjectForm = () => {
   const [supervisorLunch, setSupervisorLunch] = useState(false);
   const [errors, setErrors] = useState({});
   const [floatingCircles, setFloatingCircles] = useState([]);
-
-  useEffect(() => {
-    const generateCircles = () => {
-      const circles = [];
-      const circleColors = [
-        colors.primary,
-        colors.accentPurple,
-        colors.darkerPurple,
-      ];
-
-      for (let i = 0; i < 15; i++) {
-        circles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 80 + 20,
-          color: circleColors[Math.floor(Math.random() * circleColors.length)],
-          duration: Math.random() * 10 + 5,
-          delay: Math.random() * 2,
-        });
-      }
-      setFloatingCircles(circles);
-    };
-
-    generateCircles();
-  }, []);
 
   // Validation functions
   const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
@@ -131,8 +123,7 @@ const SchoolProjectForm = () => {
           index + 1
         } name is required.`;
       } else if (!validateName(member.name.trim())) {
-        newErrors[`member${index + 1}Name`
-        ] = `Member ${
+        newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
         } name must be at least 3 letters.`;
       }
@@ -157,7 +148,8 @@ const SchoolProjectForm = () => {
     if (!supervisorName.trim()) {
       newErrors.supervisorName = "Supervisor name is required.";
     } else if (!validateName(supervisorName.trim())) {
-      newErrors.supervisorName = "Supervisor name must be at least 3 characters."
+      newErrors.supervisorName =
+        "Supervisor name must be at least 3 characters.";
     }
     if (!validateEgyptianPhoneNumber(supervisorPhone)) {
       newErrors.supervisorPhone = "Invalid Egyptian phone number.";
@@ -228,7 +220,6 @@ const SchoolProjectForm = () => {
     setMembers(newMembers);
   };
 
-
   return (
     <motion.div
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
@@ -237,34 +228,41 @@ const SchoolProjectForm = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {floatingCircles.map((circle) => (
+      {/* Floating School Icons */}
+      {Array.from({ length: 16 }).map((_, i) => {
+        const Icon = icons[i % icons.length];
+        const size = Math.random() * 60 + 30;
+        const color = `rgb(168, 143, 199, ${Math.random() * 0.5 + 0.3})`;
+
+        return (
           <motion.div
-            key={circle.id}
-            className="absolute rounded-full opacity-40"
+            key={i}
+            className="absolute"
             style={{
-              left: `${circle.x}%`,
-              top: `${circle.y}%`,
-              width: `${circle.size}px`,
-              height: `${circle.size}px`,
-              backgroundColor: circle.color,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              opacity: 0.6,
+              color,
             }}
             animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, Math.random() + 0.5, 1],
-              rotate: [0, Math.random() * 360, 0],
+              scale: [1, 1.5, 1],
+              rotate: [0, 30, -30, 0],
+              opacity: [0.6, 0.8, 0.6],
+              filter: ["blur(2px)", "blur(6px)", "blur(2px)"],
+              x: [0, 40, -40, 0],
+              y: [0, -40, 40, 0],
             }}
             transition={{
-              duration: circle.duration,
+              duration: Math.random() * 4 + 8,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: circle.delay,
+              delay: Math.random() * 3,
             }}
-          />
-        ))}
-      </div>
+          >
+            <Icon size={size} />
+          </motion.div>
+        );
+      })}
 
       {/* Gradient overlay */}
       <div
@@ -311,7 +309,7 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Project Title عنوان المشروع*
           </label>
@@ -320,7 +318,7 @@ const SchoolProjectForm = () => {
             placeholder="Enter project title"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
             style={{
-              borderColor: colors.lighterPurple, 
+              borderColor: colors.lighterPurple,
               boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
             }}
             value={projectTitle}
@@ -340,15 +338,15 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Project Category فئه المشروع*
           </label>
           <select
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
             style={{
-              borderColor: colors.lighterPurple, 
-              color: colors.darkNeutral, 
+              borderColor: colors.lighterPurple,
+              color: colors.darkNeutral,
             }}
             value={projectCategory}
             onChange={(e) => {
@@ -373,7 +371,7 @@ const SchoolProjectForm = () => {
                 type="text"
                 placeholder="Specify category"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={otherCategory}
                 onChange={(e) => setOtherCategory(e.target.value)}
                 required
@@ -400,7 +398,7 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Prototype Dimensions (if applicable) ابعاد المشروع (اذا وجد)
           </label>
@@ -427,7 +425,7 @@ const SchoolProjectForm = () => {
                 type="text"
                 placeholder="Enter prototype dimensions"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={prototypeDimensions}
                 onChange={(e) => setPrototypeDimensions(e.target.value)}
                 required
@@ -449,14 +447,14 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Project Abstract ملخص المشروع*
           </label>
           <textarea
             placeholder="Describe your project"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-            style={{ borderColor: colors.lighterPurple }} 
+            style={{ borderColor: colors.lighterPurple }}
             rows="4"
             value={projectAbstract}
             onChange={(e) => setProjectAbstract(e.target.value)}
@@ -477,14 +475,14 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Upload Project Proposal رفع مقترح المشروع*
           </label>
           <div
             className="flex items-center justify-center w-full border-2 border-dashed rounded-lg p-6 transition-all"
             style={{
-              borderColor: colors.lighterPurple + "77", 
+              borderColor: colors.lighterPurple + "77",
               backgroundColor: colors.warmNeutral, // Updated background color
             }}
           >
@@ -492,7 +490,7 @@ const SchoolProjectForm = () => {
               type="file"
               className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[transparent] file:text-[#937DB2] hover:file:bg-[#937DB2] hover:file:text-white transition-all"
               style={{
-                color: colors.lighterPurple, 
+                color: colors.lighterPurple,
               }}
               accept=".pdf, .doc, .docx"
               required
@@ -511,15 +509,15 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Educational Level المستوي التعليمي*
           </label>
           <select
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
             style={{
-              borderColor: colors.lighterPurple, 
-              color: colors.darkNeutral, 
+              borderColor: colors.lighterPurple,
+              color: colors.darkNeutral,
             }}
             value={educationalLevel}
             onChange={(e) => setEducationalLevel(e.target.value)}
@@ -545,15 +543,15 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             Educational Administration الادارة التعليمية*
           </label>
           <select
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
             style={{
-              borderColor: colors.lighterPurple, 
-              color: colors.darkNeutral, 
+              borderColor: colors.lighterPurple,
+              color: colors.darkNeutral,
             }}
             value={educationalAdministration}
             onChange={(e) => setEducationalAdministration(e.target.value)}
@@ -579,7 +577,7 @@ const SchoolProjectForm = () => {
         >
           <label
             className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }} 
+            style={{ color: colors.darkNeutral }}
           >
             School Name اسم المدرسه*
           </label>
@@ -587,7 +585,7 @@ const SchoolProjectForm = () => {
             type="text"
             placeholder="Enter school name"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-            style={{ borderColor: colors.lighterPurple }} 
+            style={{ borderColor: colors.lighterPurple }}
             value={schoolName}
             onChange={(e) => setSchoolName(e.target.value)}
             required
@@ -602,14 +600,14 @@ const SchoolProjectForm = () => {
           <motion.div
             key={index}
             className="space-y-4 pt-4"
-            style={{ borderTop: `2px solid ${colors.lighterPurple}` }} 
+            style={{ borderTop: `2px solid ${colors.lighterPurple}` }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 + index * 0.1 }}
           >
             <motion.h3
               className="text-xl font-semibold"
-              style={{ color: colors.primary }} 
+              style={{ color: colors.primary }}
               whileHover={{ x: 5 }}
             >
               Member #{index + 1}
@@ -619,7 +617,7 @@ const SchoolProjectForm = () => {
               <div>
                 <label
                   className="block text-sm font-medium mb-1"
-                  style={{ color: colors.darkNeutral }} 
+                  style={{ color: colors.darkNeutral }}
                 >
                   Name اسم الطالب*
                 </label>
@@ -627,7 +625,7 @@ const SchoolProjectForm = () => {
                   type="text"
                   placeholder="Enter member's name"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                  style={{ borderColor: colors.lighterPurple }} 
+                  style={{ borderColor: colors.lighterPurple }}
                   value={member.name}
                   onChange={(e) =>
                     handleMemberChange(index, "name", e.target.value)
@@ -643,7 +641,7 @@ const SchoolProjectForm = () => {
               <div>
                 <label
                   className="block text-sm font-medium mb-1"
-                  style={{ color: colors.darkNeutral }} 
+                  style={{ color: colors.darkNeutral }}
                 >
                   Phone Number رقم الهاتف*
                 </label>
@@ -651,7 +649,7 @@ const SchoolProjectForm = () => {
                   type="tel"
                   placeholder="Enter member's phone number"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                  style={{ borderColor: colors.lighterPurple }} 
+                  style={{ borderColor: colors.lighterPurple }}
                   value={member.phone}
                   onChange={(e) =>
                     handleMemberChange(index, "phone", e.target.value)
@@ -670,7 +668,7 @@ const SchoolProjectForm = () => {
               <div>
                 <label
                   className="block text-sm font-medium mb-1"
-                  style={{ color: colors.darkNeutral }} 
+                  style={{ color: colors.darkNeutral }}
                 >
                   Email البريد الالكتروني*
                 </label>
@@ -678,7 +676,7 @@ const SchoolProjectForm = () => {
                   type="email"
                   placeholder="Enter member's email"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                  style={{ borderColor: colors.lighterPurple }} 
+                  style={{ borderColor: colors.lighterPurple }}
                   value={member.email}
                   onChange={(e) =>
                     handleMemberChange(index, "email", e.target.value)
@@ -694,7 +692,7 @@ const SchoolProjectForm = () => {
               <div>
                 <label
                   className="block text-sm font-medium mb-1"
-                  style={{ color: colors.darkNeutral }} 
+                  style={{ color: colors.darkNeutral }}
                 >
                   National ID الرقم القومي*
                 </label>
@@ -702,7 +700,7 @@ const SchoolProjectForm = () => {
                   type="text"
                   placeholder="Enter member's national ID"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                  style={{ borderColor: colors.lighterPurple }} 
+                  style={{ borderColor: colors.lighterPurple }}
                   value={member.nationalId}
                   onChange={(e) =>
                     handleMemberChange(index, "nationalId", e.target.value)
@@ -756,14 +754,14 @@ const SchoolProjectForm = () => {
         {/* Supervisor */}
         <motion.div
           className="space-y-4 pt-4"
-          style={{ borderTop: `2px solid ${colors.lighterPurple}` }} 
+          style={{ borderTop: `2px solid ${colors.lighterPurple}` }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4 }}
         >
           <motion.h3
             className="text-xl font-semibold"
-            style={{ color: colors.primary }} 
+            style={{ color: colors.primary }}
             whileHover={{ x: 5 }}
           >
             Supervisor
@@ -773,7 +771,7 @@ const SchoolProjectForm = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }} 
+                style={{ color: colors.darkNeutral }}
               >
                 Name اسم المشرف*
               </label>
@@ -781,7 +779,7 @@ const SchoolProjectForm = () => {
                 type="text"
                 placeholder="Enter supervisor's name"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={supervisorName}
                 onChange={(e) => setSupervisorName(e.target.value)}
                 required
@@ -795,7 +793,7 @@ const SchoolProjectForm = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }} 
+                style={{ color: colors.darkNeutral }}
               >
                 Phone Number رقم الهاتف*
               </label>
@@ -803,7 +801,7 @@ const SchoolProjectForm = () => {
                 type="tel"
                 placeholder="Enter supervisor's phone number"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={supervisorPhone}
                 onChange={(e) => setSupervisorPhone(e.target.value)}
                 required
@@ -820,7 +818,7 @@ const SchoolProjectForm = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }} 
+                style={{ color: colors.darkNeutral }}
               >
                 Email البريد الالكتروني*
               </label>
@@ -828,7 +826,7 @@ const SchoolProjectForm = () => {
                 type="email"
                 placeholder="Enter supervisor's email"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={supervisorEmail}
                 onChange={(e) => setSupervisorEmail(e.target.value)}
                 required
@@ -842,7 +840,7 @@ const SchoolProjectForm = () => {
             <div>
               <label
                 className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }} 
+                style={{ color: colors.darkNeutral }}
               >
                 National ID الرقم القومي*
               </label>
@@ -850,7 +848,7 @@ const SchoolProjectForm = () => {
                 type="text"
                 placeholder="Enter supervisor's national ID"
                 className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-                style={{ borderColor: colors.lighterPurple }} 
+                style={{ borderColor: colors.lighterPurple }}
                 value={supervisorNationalId}
                 onChange={(e) => setSupervisorNationalId(e.target.value)}
                 required
@@ -866,7 +864,7 @@ const SchoolProjectForm = () => {
           <div>
             <label
               className="block text-sm font-medium mb-1"
-              style={{ color: colors.darkNeutral }} 
+              style={{ color: colors.darkNeutral }}
             >
               Additional for Supervisor
             </label>

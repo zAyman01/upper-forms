@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import "boxicons";
 
 const universities = [
   "Aswan University",
@@ -43,48 +44,30 @@ const ProjectSubmissionForm = () => {
   const [university, setUniversity] = useState("");
   const [faculty, setFaculty] = useState("");
   const [year, setYear] = useState("");
-  const [teamMembers, setTeamMembers] = useState(2);
-  const [member1Name, setMember1Name] = useState("");
-  const [member1Phone, setMember1Phone] = useState("");
-  const [member1Email, setMember1Email] = useState("");
-  const [member1NationalId, setMember1NationalId] = useState("");
-  const [member1Accommodation, setMember1Accommodation] = useState(false);
-  const [member2Name, setMember2Name] = useState("");
-  const [member2Phone, setMember2Phone] = useState("");
-  const [member2Email, setMember2Email] = useState("");
-  const [member2NationalId, setMember2NationalId] = useState("");
-  const [member2Accommodation, setMember2Accommodation] = useState(false);
+  const [members, setMembers] = useState([
+    {
+      id: 1,
+      name: "",
+      phone: "",
+      email: "",
+      nationalId: "",
+      accommodation: false,
+      lunch: false,
+    },
+    {
+      id: 2,
+      name: "",
+      phone: "",
+      email: "",
+      nationalId: "",
+      accommodation: false,
+      lunch: false,
+    },
+  ]);
   const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
   const [teamLeaderWhatsApp, setTeamLeaderWhatsApp] = useState("");
   const [errors, setErrors] = useState({});
   const [floatingCircles, setFloatingCircles] = useState([]);
-
-  useEffect(() => {
-    const generateCircles = () => {
-      const circles = [];
-      const circleColors = [
-        colors.primary,
-        colors.accentBlue,
-        colors.darkerBlue,
-        colors.darkNeutral,
-      ];
-
-      for (let i = 0; i < 15; i++) {
-        circles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          size: Math.random() * 80 + 20,
-          color: circleColors[Math.floor(Math.random() * circleColors.length)],
-          duration: Math.random() * 10 + 5,
-          delay: Math.random() * 2,
-        });
-      }
-      setFloatingCircles(circles);
-    };
-
-    generateCircles();
-  }, []);
 
   // Validation functions
   const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
@@ -93,14 +76,64 @@ const ProjectSubmissionForm = () => {
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validateNationalId = (id) => /^\d{14}$/.test(id);
 
+  const handleAddMember = () => {
+    if (members.length < 7) {
+      setMembers([
+        ...members,
+        {
+          id: members.length + 1,
+          name: "",
+          phone: "",
+          email: "",
+          nationalId: "",
+          accommodation: false,
+          lunch: false,
+        },
+      ]);
+    }
+  };
+
+  const handleRemoveMember = (id) => {
+    setMembers(members.filter((member) => member.id !== id));
+  };
+
+  const handleMemberChange = (index, field, value) => {
+    const updatedMembers = [...members];
+    updatedMembers[index][field] = value;
+    setMembers(updatedMembers);
+  };
+
+  const handleAccommodationChange = (index) => {
+    const updatedMembers = [...members];
+    const currentAccommodationCount = updatedMembers.filter(
+      (member) => member.accommodation
+    ).length;
+
+    if (currentAccommodationCount < 2 || updatedMembers[index].accommodation) {
+      updatedMembers[index].accommodation =
+        !updatedMembers[index].accommodation;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleLunchChange = (index) => {
+    const updatedMembers = [...members];
+    const currentLunchCount = updatedMembers.filter(
+      (member) => member.lunch
+    ).length;
+
+    if (currentLunchCount < 2 || updatedMembers[index].lunch) {
+      updatedMembers[index].lunch = !updatedMembers[index].lunch;
+      setMembers(updatedMembers);
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
     // Project Title
     if (!projectTitle.trim()) {
       newErrors.projectTitle = "Project title is required.";
-    } else if (!validateName(projectTitle)) {
-      newErrors.projectTitle = "Project title must be at least 3 letters.";
     }
 
     // Project Category
@@ -117,94 +150,28 @@ const ProjectSubmissionForm = () => {
       newErrors.otherTrack = "Please specify the track.";
     }
 
-    // Prototype Dimensions
-    if (showPrototypeInput && !prototypeDimensions.trim()) {
-      newErrors.prototypeDimensions = "Prototype dimensions are required.";
-    }
-
-    // Project Abstract
-    if (!projectAbstract.trim()) {
-      newErrors.projectAbstract = "Project abstract is required.";
-    } else if (projectAbstract.length < 5) {
-      newErrors.projectAbstract = "Project abstract must be at least 5 characters long.";
-    }
-
-    // University
-    if (!educationalAdministration) {
-      newErrors.educationalAdministration = "University is required.";
-    }
-
-    // Faculty
-    if (!faculty.trim()) {
-      newErrors.faculty = "Faculty is required.";
-    }
-
-    // Year
-    if (!year) {
-      newErrors.year = "Year is required.";
-    }
-
-    // Team Members
-    if (teamMembers < 2 || teamMembers > 7) {
-      newErrors.teamMembers = "Team members must be between 2 and 7.";
-    }
-
-    // Member 1
-    if (!member1Name.trim()) {
-      newErrors.member1Name = "Member 1 name is required.";
-    } else if (!validateName(member1Name)) {
-      newErrors.member1Name = "Member 1 name must be at least 3 letters.";
-    }
-    if (!validateEgyptianPhoneNumber(member1Phone)) {
-      newErrors.member1Phone = "Invalid Egyptian phone number.";
-    }
-    if (!validateEmail(member1Email)) {
-      newErrors.member1Email = "Invalid email format.";
-    }
-    if (!validateNationalId(member1NationalId)) {
-      newErrors.member1NationalId = "Invalid national ID.";
-    }
-
-    // Member 2 (if applicable)
-    if (teamMembers >= 2) {
-      if (!member2Name.trim()) {
-        newErrors.member2Name = "Member 2 name is required.";
-      } else if (!validateName(member2Name)) {
-        newErrors.member2Name = "Member 2 name must be at least 3 letters.";
-      }
-      if (!validateEgyptianPhoneNumber(member2Phone)) {
-        newErrors.member2Phone = "Invalid Egyptian phone number.";
-      }
-      if (!validateEmail(member2Email)) {
-        newErrors.member2Email = "Invalid email format.";
-      }
-      if (!validateNationalId(member2NationalId)) {
-        newErrors.member2NationalId = "Invalid national ID.";
-      }
-    }
-
-    // Team Leader
-    if (!validateEmail(teamLeaderEmail)) {
-      newErrors.teamLeaderEmail = "Invalid email format.";
-    }
-    if (!validateEgyptianPhoneNumber(teamLeaderWhatsApp)) {
-      newErrors.teamLeaderWhatsApp = "Invalid WhatsApp number.";
-    }
+    // Members Validation
+    members.forEach((member, index) => {
+      if (!validateName(member.name))
+        newErrors[`member${index + 1}Name`] = `Member ${
+          index + 1
+        } name is required.`;
+      if (!validateEgyptianPhoneNumber(member.phone))
+        newErrors[
+          `member${index + 1}Phone`
+        ] = `Invalid phone number for member ${index + 1}.`;
+      if (!validateEmail(member.email))
+        newErrors[
+          `member${index + 1}Email`
+        ] = `Invalid email format for member ${index + 1}.`;
+      if (!validateNationalId(member.nationalId))
+        newErrors[
+          `member${index + 1}NationalId`
+        ] = `Invalid national ID for member ${index + 1}.`;
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const isValid = validateForm();
-
-    if (isValid) {
-      alert("Form submitted successfully!");
-      resetForm();
-    } else {
-      console.log("Form has errors. Please fix them.");
-    }
   };
 
   const resetForm = () => {
@@ -222,20 +189,37 @@ const ProjectSubmissionForm = () => {
     setUniversity("");
     setFaculty("");
     setYear("");
-    setTeamMembers(2);
-    setMember1Name("");
-    setMember1Phone("");
-    setMember1Email("");
-    setMember1NationalId("");
-    setMember1Accommodation(false);
-    setMember2Name("");
-    setMember2Phone("");
-    setMember2Email("");
-    setMember2NationalId("");
-    setMember2Accommodation(false);
+    setMembers([
+      {
+        id: 1,
+        name: "",
+        phone: "",
+        email: "",
+        nationalId: "",
+        accommodation: false,
+        lunch: false,
+      },
+      {
+        id: 2,
+        name: "",
+        phone: "",
+        email: "",
+        nationalId: "",
+        accommodation: false,
+        lunch: false,
+      },
+    ]);
     setTeamLeaderEmail("");
     setTeamLeaderWhatsApp("");
     setErrors({});
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      alert("Form submitted successfully!");
+      resetForm();
+    }
   };
 
   return (
@@ -246,40 +230,92 @@ const ProjectSubmissionForm = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {floatingCircles.map((circle) => (
+      {/* Floating Abstract Shapes */}
+      {Array.from({ length: 16 }).map((_, i) => {
+        const size = Math.random() * 80 + 50;
+        const color = `rgba(59, 130, 246, ${Math.random() * 0.5 + 0.3})`;
+
+        return (
           <motion.div
-            key={circle.id}
-            className="absolute rounded-full opacity-40"
+            key={i}
+            className="absolute"
             style={{
-              left: `${circle.x}%`,
-              top: `${circle.y}%`,
-              width: `${circle.size}px`,
-              height: `${circle.size}px`,
-              backgroundColor: circle.color,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              opacity: 0.4,
             }}
             animate={{
-              x: [0, Math.random() * 100 - 50, 0],
-              y: [0, Math.random() * 100 - 50, 0],
-              scale: [1, Math.random() + 0.5, 1],
-              rotate: [0, Math.random() * 360, 0],
+              scale: [1, 1.5, 1],
+              rotate: [0, 30, -30, 0],
+              opacity: [0.6, 0.3, 0.6],
+              filter: ["blur(2px)", "blur(6px)", "blur(2px)"],
+              x: [0, 40, -40, 0],
+              y: [0, -40, 40, 0],
             }}
             transition={{
-              duration: circle.duration,
+              duration: Math.random() * 4 + 8,
               repeat: Infinity,
               ease: "easeInOut",
-              delay: circle.delay,
+              delay: Math.random() * 3,
             }}
-          />
-        ))}
-      </div>
+          >
+            <div
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: color,
+                borderRadius: "50%",
+              }}
+            ></div>
+          </motion.div>
+        );
+      })}
+
+      {/* Floating Glowing Orbs */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const size = Math.random() * 40 + 20;
+        const color = `#58B3DC, ${Math.random() * 0.5 + 0.3})`;
+
+        return (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              opacity: 0.3,
+            }}
+            animate={{
+              scale: [0.8, 1.6, 0.8],
+              opacity: [0.5, 0.2, 0.5],
+              filter: ["blur(3px)", "blur(8px)", "blur(3px)"],
+              x: [0, 30, -30, 0],
+              y: [0, -30, 30, 0],
+            }}
+            transition={{
+              duration: Math.random() * 4 + 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 2,
+            }}
+          >
+            <div
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: color,
+                borderRadius: "50%",
+              }}
+            ></div>
+          </motion.div>
+        );
+      })}
 
       {/* Gradient overlay */}
       <div
         className="absolute inset-0 opacity-50"
         style={{
-          background: `linear-gradient(135deg, ${colors.primary}22, ${colors.accentBlue}33, ${colors.warmNeutral}22)`,
+          background: `linear-gradient(135deg, ${colors.primary}22, ${colors.lighterBlue}33, ${colors.darkNeutral}22)`,
         }}
       ></div>
 
@@ -664,188 +700,34 @@ const ProjectSubmissionForm = () => {
           )}
         </motion.div>
 
-        {/* Team Members */}
+        {/* Red Note */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.2 }}
-        >
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }}
-          >
-            Number of Team Members *
-          </label>
-          <select
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#58B3DC] hover:shadow-md"
-            style={{
-              borderColor: colors.lighterBlue,
-              color: colors.darkNeutral,
-            }}
-            value={teamMembers}
-            onChange={(e) => setTeamMembers(Number(e.target.value))}
-            required
-          >
-            {[2, 3, 4, 5, 6, 7].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-          {errors.teamMembers && (
-            <p className="text-sm text-red-500 mt-1">{errors.teamMembers}</p>
-          )}
-        </motion.div>
-
-        {/* Member #1 */}
-        <motion.div
-          className="space-y-4 pt-4"
-          style={{ borderTop: `2px solid ${colors.lighterBlue}` }}
+          className="text-center text-sm text-red-500 pt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.3 }}
+          style={{ borderTop: `2px solid ${colors.lighterBlue}` }}
         >
-          <motion.h3
-            className="text-xl font-semibold"
-            style={{ color: colors.darkNeutral }}
-            whileHover={{ x: 5 }}
-          >
-            Member #1
-          </motion.h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Name *
-              </label>
-              <input
-                type="text"
-                placeholder="Enter member's name"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={member1Name}
-                onChange={(e) => setMember1Name(e.target.value)}
-                required
-              />
-              {errors.member1Name && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Name}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                placeholder="Enter member's phone number"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={member1Phone}
-                onChange={(e) => setMember1Phone(e.target.value)}
-                required
-              />
-              {errors.member1Phone && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Phone}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                placeholder="Enter member's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={member1Email}
-                onChange={(e) => setMember1Email(e.target.value)}
-                required
-              />
-              {errors.member1Email && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1Email}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                National ID *
-              </label>
-              <input
-                type="text"
-                placeholder="Enter member's national ID"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={member1NationalId}
-                onChange={(e) => setMember1NationalId(e.target.value)}
-                required
-              />
-              {errors.member1NationalId && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.member1NationalId}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              style={{ color: colors.darkNeutral }}
-            >
-              Additional for Member #1
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
-                  style={{ color: colors.lighterBlue }}
-                  checked={member1Accommodation}
-                  onChange={(e) => setMember1Accommodation(e.target.checked)}
-                />
-                <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                  Accommodation (free for 2 members)
-                </span>
-              </label>
-            </div>
-          </div>
+          Note: Free accommodation and lunch are only available for 2 members.
         </motion.div>
 
-        {/* Member #2 (if applicable) */}
-        {teamMembers >= 2 && (
+        {/* Members Details */}
+        {members.map((member, index) => (
           <motion.div
+            key={member.id}
             className="space-y-4 pt-4"
-            style={{ borderTop: `2px solid ${colors.lighterBlue}` }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.4 }}
+            transition={{ delay: 1.1 + index * 0.1 }}
           >
             <motion.h3
               className="text-xl font-semibold"
-              style={{ color: colors.darkNeutral }}
+              style={{
+                color: index % 2 === 0 ? colors.primary : colors.accentBlue,
+              }}
               whileHover={{ x: 5 }}
             >
-              Member #2
+              Member #{index + 1}
             </motion.h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -861,13 +743,15 @@ const ProjectSubmissionForm = () => {
                   placeholder="Enter member's name"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
                   style={{ borderColor: colors.lighterBlue }}
-                  value={member2Name}
-                  onChange={(e) => setMember2Name(e.target.value)}
+                  value={member.name}
+                  onChange={(e) =>
+                    handleMemberChange(index, "name", e.target.value)
+                  }
                   required
                 />
-                {errors.member2Name && (
+                {errors[`member${index + 1}Name`] && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.member2Name}
+                    {errors[`member${index + 1}Name`]}
                   </p>
                 )}
               </div>
@@ -883,13 +767,15 @@ const ProjectSubmissionForm = () => {
                   placeholder="Enter member's phone number"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
                   style={{ borderColor: colors.lighterBlue }}
-                  value={member2Phone}
-                  onChange={(e) => setMember2Phone(e.target.value)}
+                  value={member.phone}
+                  onChange={(e) =>
+                    handleMemberChange(index, "phone", e.target.value)
+                  }
                   required
                 />
-                {errors.member2Phone && (
+                {errors[`member${index + 1}Phone`] && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.member2Phone}
+                    {errors[`member${index + 1}Phone`]}
                   </p>
                 )}
               </div>
@@ -901,19 +787,22 @@ const ProjectSubmissionForm = () => {
                   className="block text-sm font-medium mb-1"
                   style={{ color: colors.darkNeutral }}
                 >
-                  Email
+                  Email *
                 </label>
                 <input
                   type="email"
                   placeholder="Enter member's email"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
                   style={{ borderColor: colors.lighterBlue }}
-                  value={member2Email}
-                  onChange={(e) => setMember2Email(e.target.value)}
+                  value={member.email}
+                  onChange={(e) =>
+                    handleMemberChange(index, "email", e.target.value)
+                  }
+                  required
                 />
-                {errors.member2Email && (
+                {errors[`member${index + 1}Email`] && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.member2Email}
+                    {errors[`member${index + 1}Email`]}
                   </p>
                 )}
               </div>
@@ -929,13 +818,15 @@ const ProjectSubmissionForm = () => {
                   placeholder="Enter member's national ID"
                   className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
                   style={{ borderColor: colors.lighterBlue }}
-                  value={member2NationalId}
-                  onChange={(e) => setMember2NationalId(e.target.value)}
+                  value={member.nationalId}
+                  onChange={(e) =>
+                    handleMemberChange(index, "nationalId", e.target.value)
+                  }
                   required
                 />
-                {errors.member2NationalId && (
+                {errors[`member${index + 1}NationalId`] && (
                   <p className="text-sm text-red-500 mt-1">
-                    {errors.member2NationalId}
+                    {errors[`member${index + 1}NationalId`]}
                   </p>
                 )}
               </div>
@@ -946,7 +837,7 @@ const ProjectSubmissionForm = () => {
                 className="block text-sm font-medium mb-1"
                 style={{ color: colors.darkNeutral }}
               >
-                Additional for Member #2
+                Additional for Member #{index + 1}
               </label>
               <div className="space-y-2">
                 <label className="flex items-center">
@@ -954,56 +845,77 @@ const ProjectSubmissionForm = () => {
                     type="checkbox"
                     className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
                     style={{ color: colors.lighterBlue }}
-                    checked={member2Accommodation}
-                    onChange={(e) => setMember2Accommodation(e.target.checked)}
+                    checked={member.accommodation}
+                    onChange={() => handleAccommodationChange(index)}
+                    disabled={
+                      !member.accommodation &&
+                      members.filter((m) => m.accommodation).length >= 2
+                    }
                   />
                   <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                    Accommodation (free for 2 members)
+                    Accommodation
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
+                    style={{ color: colors.lighterBlue }}
+                    checked={member.lunch}
+                    onChange={() => handleLunchChange(index)}
+                    disabled={
+                      !member.lunch &&
+                      members.filter((m) => m.lunch).length >= 2
+                    }
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Lunch
                   </span>
                 </label>
               </div>
             </div>
+
+            {/* Remove Member Button*/}
+            {index >= 2 && (
+              <button
+                type="button"
+                className="text-sm text-red-500 hover:text-red-700"
+                onClick={() => handleRemoveMember(member.id)}
+              >
+                Remove Member
+              </button>
+            )}
+          </motion.div>
+        ))}
+
+        {/* Add Member Button */}
+        {members.length < 7 && (
+          <motion.div
+            className="flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 + members.length * 0.1 }}
+          >
+            <button
+              type="button"
+              className="px-4 py-2 text-white font-semibold rounded-lg transition-all"
+              style={{
+                background: `linear-gradient(to right, ${colors.primary}, ${colors.accentBlue})`,
+                cursor: "pointer",
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddMember}
+            >
+              Add Member
+            </button>
           </motion.div>
         )}
-
-        {/* Upload Excel Sheet */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.5 }}
-        >
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }}
-          >
-            Upload Excel Sheet for Additional Members
-          </label>
-          <div
-            className="flex items-center justify-center w-full border-2 border-dashed rounded-lg p-6 transition-all"
-            style={{
-              borderColor: colors.lighterBlue + "77",
-              backgroundColor: colors.warmNeutral,
-            }}
-          >
-            <input
-              type="file"
-              className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[transparent] file:text-[#58B3DC] hover:file:bg-[#58B3DC] hover:file:text-white transition-all"
-              style={{
-                color: colors.lighterBlue,
-              }}
-              accept=".xlsx, .xls"
-            />
-          </div>
-          <p className="mt-2 text-sm" style={{ color: colors.darkNeutral }}>
-            Max 10 MB
-          </p>
-        </motion.div>
 
         {/* Contact Information - Team Leader */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.6 }}
+          transition={{ delay: 1.4 }}
           className="p-4 rounded-lg"
           style={{ backgroundColor: colors.warmNeutral }}
         >

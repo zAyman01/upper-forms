@@ -631,19 +631,19 @@ const MemberForm = () => {
 
         {/* Add Member Button */}
         {members.length < 2 && (
-          <button
-            type="button"
-            className=" p-2 font-semibold rounded-lg transition-all bg-[#E0E0E0] text-[#2D2D2D] hover:bg-[transparent] hover:text-[#E0E0E0]"
-            whileHover={{
-              scale: 1.05,
-              boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
-              background: colors.primary, // Updated hover gradient
-            }}
-            onClick={addMember}
-          >
-            Add Member
-          </button>
-        )}
+  <motion.button
+    type="button"
+    className="p-2 font-semibold rounded-lg transition-all bg-[#E0E0E0] text-[#2D2D2D] hover:bg-[transparent] hover:text-[#E0E0E0]"
+    whileHover={{
+      scale: 1.05,
+      boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
+      background: colors.primary,
+    }}
+    onClick={addMember}
+  >
+    Add Member
+  </motion.button>
+)}
 
         {/* Submit Button */}
         <motion.button

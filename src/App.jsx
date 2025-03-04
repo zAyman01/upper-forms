@@ -1,5 +1,5 @@
 import React from "react";
-import Form from "./Forms/CTFForm";
+import Form from "./Forms/SchoolsProjects";
 
 function App() {
   return (
