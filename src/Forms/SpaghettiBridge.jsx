@@ -4,7 +4,6 @@ import { FaBridge, FaScissors } from "react-icons/fa6";
 import { PiBridgeBold } from "react-icons/pi";
 import { FaHardHat } from "react-icons/fa";
 
-
 const icons = [FaBridge, PiBridgeBold, FaScissors, FaHardHat];
 
 const universities = [
@@ -52,6 +51,45 @@ const SpaghettiBridgeForm = () => {
   const [howDidYouKnow, setHowDidYouKnow] = useState("");
   const [communityPartner, setCommunityPartner] = useState("");
   const [errors, setErrors] = useState({});
+
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
+
+  // Popup Component
+  const Popup = ({ type, message, onClose }) => {
+    const popupStyles = {
+      success: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkYellow,
+      },
+      error: {
+        backgroundColor: "#f44336",
+        borderColor: "#d32f2f",
+      },
+    };
+
+    return (
+      <motion.div
+        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+        style={popupStyles[type]}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <span>{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      </motion.div>
+    );
+  };
 
   const handleAddMember = () => {
     if (members.length < 5) {
@@ -105,8 +143,6 @@ const SpaghettiBridgeForm = () => {
     // Faculty
     if (!faculty.trim()) {
       newErrors.faculty = "Faculty is required.";
-    } else if (faculty.trim().length < 3) {
-      newErrors.faculty = "Faculty must be at least 3 characters long.";
     }
 
     // Members Validation
@@ -171,8 +207,19 @@ const SpaghettiBridgeForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      alert("Form submitted successfully!");
+      setPopup({
+        visible: true,
+        type: "success",
+        message: "Form submitted successfully!",
+      });
+
       resetForm();
+
+      setTimeout(() => {
+        setPopup({ visible: false, type: "", message: "" });
+      }, 5000);
+    } else {
+      console.log(errors);
     }
   };
 
@@ -385,6 +432,16 @@ const SpaghettiBridgeForm = () => {
             >
               {member.isLeader ? "Leader" : `Member #${index + 1}`}
             </motion.h3>
+
+            {/* Add the note under the leader's information */}
+            {member.isLeader && (
+              <p className="text-sm text-red-500 mt-2">
+                All Team members transportation are covered.
+                <br />
+                If you are not studying at Aswan University: Only 2 members will
+                have accommodation.
+              </p>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -602,6 +659,14 @@ const SpaghettiBridgeForm = () => {
           Submit
         </motion.button>
       </motion.form>
+      {/* Popup */}
+      {popup.visible && (
+        <Popup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup({ visible: false, type: "", message: "" })}
+        />
+      )}
     </motion.div>
   );
 };

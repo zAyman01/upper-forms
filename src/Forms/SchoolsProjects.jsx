@@ -60,7 +60,44 @@ const SchoolProjectForm = () => {
   const [supervisorAccommodation, setSupervisorAccommodation] = useState(false);
   const [supervisorLunch, setSupervisorLunch] = useState(false);
   const [errors, setErrors] = useState({});
-  const [floatingCircles, setFloatingCircles] = useState([]);
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
+
+  // Popup Component
+  const Popup = ({ type, message, onClose }) => {
+    const popupStyles = {
+      success: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkGreen,
+      },
+      error: {
+        backgroundColor: "#f44336",
+        borderColor: "#d32f2f",
+      },
+    };
+
+    return (
+      <motion.div
+        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+        style={popupStyles[type]}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <span>{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      </motion.div>
+    );
+  };
 
   // Validation functions
   const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
@@ -95,9 +132,9 @@ const SchoolProjectForm = () => {
     // Project Abstract
     if (!projectAbstract.trim()) {
       newErrors.projectAbstract = "Project abstract is required.";
-    } else if (projectAbstract.length < 5) {
+    } else if (projectAbstract.length < 10) {
       newErrors.projectAbstract =
-        "Project abstract must be at least 5 characters long.";
+        "Project abstract must be at least 10 characters long.";
     }
 
     // Educational Level
@@ -112,54 +149,40 @@ const SchoolProjectForm = () => {
     }
 
     // School Name
-    if (!schoolName.trim()) {
-      newErrors.schoolName = "School name is required.";
-    }
+    if (!validateName(schoolName))
+      newErrors.schoolName =
+        "School is required and must be at least 3 letters.";
 
     // Members
     members.forEach((member, index) => {
-      if (!member.name.trim()) {
-        newErrors[`member${index + 1}Name`] = `Member ${
-          index + 1
-        } name is required.`;
-      } else if (!validateName(member.name.trim())) {
+      if (!validateName(member.name))
         newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
         } name must be at least 3 letters.`;
-      }
-      if (!validateEgyptianPhoneNumber(member.phone)) {
+      if (!validateEgyptianPhoneNumber(member.phone))
         newErrors[
           `member${index + 1}Phone`
-        ] = `Invalid Egyptian phone number for member ${index + 1}.`;
-      }
-      if (!validateEmail(member.email)) {
+        ] = `Invalid phone number for member ${index + 1}.`;
+      if (!validateEmail(member.email))
         newErrors[
           `member${index + 1}Email`
         ] = `Invalid email format for member ${index + 1}.`;
-      }
-      if (!validateNationalId(member.nationalId)) {
+      if (!validateNationalId(member.nationalId))
         newErrors[
           `member${index + 1}NationalId`
         ] = `Invalid national ID for member ${index + 1}.`;
-      }
     });
 
+
     // Supervisor
-    if (!supervisorName.trim()) {
-      newErrors.supervisorName = "Supervisor name is required.";
-    } else if (!validateName(supervisorName.trim())) {
-      newErrors.supervisorName =
-        "Supervisor name must be at least 3 characters.";
-    }
-    if (!validateEgyptianPhoneNumber(supervisorPhone)) {
+    if (!validateName(supervisorName))
+      newErrors.supervisorName = "Supervisor name must be at least 3 letters.";
+    if (!validateEgyptianPhoneNumber(supervisorPhone))
       newErrors.supervisorPhone = "Invalid Egyptian phone number.";
-    }
-    if (!validateEmail(supervisorEmail)) {
+    if (supervisorEmail && !validateEmail(supervisorEmail))
       newErrors.supervisorEmail = "Invalid email format.";
-    }
-    if (!validateNationalId(supervisorNationalId)) {
+    if (!validateNationalId(supervisorNationalId))
       newErrors.supervisorNationalId = "Invalid national ID.";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -167,13 +190,20 @@ const SchoolProjectForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const isValid = validateForm();
+    if (validateForm()) {
+      setPopup({
+        visible: true,
+        type: "success",
+        message: "Form submitted successfully!",
+      });
 
-    if (isValid) {
-      alert("Form submitted successfully!");
       resetForm();
+
+      setTimeout(() => {
+        setPopup({ visible: false, type: "", message: "" });
+      }, 5000);
     } else {
-      console.log("Form has errors. Please fix them.");
+      console.log(errors);
     }
   };
 
@@ -917,6 +947,14 @@ const SchoolProjectForm = () => {
           Submit
         </motion.button>
       </motion.form>
+      {/* Popup */}
+      {popup.visible && (
+        <Popup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup({ visible: false, type: "", message: "" })}
+        />
+      )}
     </motion.div>
   );
 };

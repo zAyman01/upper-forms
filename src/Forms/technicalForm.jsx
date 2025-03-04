@@ -37,6 +37,7 @@ const TechnicalFormSubmission = () => {
   const [otherCategory, setOtherCategory] = useState("");
   const [hasPrototype, setHasPrototype] = useState(false);
   const [prototypeDimensions, setPrototypeDimensions] = useState("");
+    const [showPrototypeInput, setShowPrototypeInput] = useState(false);
   const [projectAbstract, setProjectAbstract] = useState("");
   const [educationalAdministration, setEducationalAdministration] =
     useState("");
@@ -59,7 +60,45 @@ const TechnicalFormSubmission = () => {
   const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
   const [teamLeaderWhatsApp, setTeamLeaderWhatsApp] = useState("");
   const [errors, setErrors] = useState({});
-  const [floatingCircles, setFloatingCircles] = useState([]);
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
+
+  // Popup Component
+  const Popup = ({ type, message, onClose }) => {
+    const popupStyles = {
+      success: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkGreen,
+      },
+      error: {
+        backgroundColor: "#f44336",
+        borderColor: "#d32f2f",
+      },
+    };
+
+    return (
+      <motion.div
+        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+        style={popupStyles[type]}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <span>{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      </motion.div>
+    );
+  };
+
 
   const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
   const validateEgyptianPhoneNumber = (phone) =>
@@ -139,7 +178,7 @@ const TechnicalFormSubmission = () => {
       if (!validateName(member.name))
         newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
-        } name is required.`;
+        } name must be at least 3 letters.`;
       if (!validateEgyptianPhoneNumber(member.phone))
         newErrors[
           `member${index + 1}Phone`
@@ -156,18 +195,13 @@ const TechnicalFormSubmission = () => {
 
     if (!validateName(supervisorName))
       newErrors.supervisorName =
-        "Supervisor name is required and must be at least 3 letters.";
+        "Supervisor name must be at least 3 letters.";
     if (!validateEgyptianPhoneNumber(supervisorPhone))
       newErrors.supervisorPhone = "Invalid Egyptian phone number.";
     if (supervisorEmail && !validateEmail(supervisorEmail))
       newErrors.supervisorEmail = "Invalid email format.";
     if (!validateNationalId(supervisorNationalId))
       newErrors.supervisorNationalId = "Invalid national ID.";
-
-    if (!validateEmail(teamLeaderEmail))
-      newErrors.teamLeaderEmail = "Invalid email format.";
-    if (!validateEgyptianPhoneNumber(teamLeaderWhatsApp))
-      newErrors.teamLeaderWhatsApp = "Invalid WhatsApp number.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -176,10 +210,19 @@ const TechnicalFormSubmission = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      alert("Form submitted successfully!");
+      setPopup({
+        visible: true,
+        type: "success",
+        message: "Form submitted successfully!",
+      });
+
       resetForm();
+
+      setTimeout(() => {
+        setPopup({ visible: false, type: "", message: "" });
+      }, 5000);
     } else {
-      console.log("Form has errors. Please fix them.");
+      console.log(errors);
     }
   };
 
@@ -842,68 +885,6 @@ const TechnicalFormSubmission = () => {
           </div>
         </motion.div>
 
-        {/* Contact Information - Supervisor */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.6 }}
-          className="p-4 rounded-lg"
-          style={{ backgroundColor: colors.warmNeutral }}
-        >
-          <h3
-            className="text-xl font-semibold mb-4"
-            style={{ color: colors.primary }}
-          >
-            Contact Information - Supervisor
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                placeholder="Team leader's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.dimGray hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={teamLeaderEmail}
-                onChange={(e) => setTeamLeaderEmail(e.target.value)}
-                required
-              />
-              {errors.teamLeaderEmail && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderEmail}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                WhatsApp Number *
-              </label>
-              <input
-                type="tel"
-                placeholder="Team leader's WhatsApp"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.dimGray hover:border-[#72B27D] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={teamLeaderWhatsApp}
-                onChange={(e) => setTeamLeaderWhatsApp(e.target.value)}
-                required
-              />
-              {errors.teamLeaderWhatsApp && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderWhatsApp}
-                </p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
         {/* Submit Button */}
         <motion.button
           type="submit"
@@ -924,6 +905,14 @@ const TechnicalFormSubmission = () => {
           Submit
         </motion.button>
       </motion.form>
+      {/* Popup */}
+      {popup.visible && (
+        <Popup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup({ visible: false, type: "", message: "" })}
+        />
+      )}
     </motion.div>
   );
 };

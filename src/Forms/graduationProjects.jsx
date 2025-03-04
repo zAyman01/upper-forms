@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FaGraduationCap,
@@ -15,7 +15,6 @@ const icons = [
   FaUniversity,
   FaAward,
 ];
-
 
 const universities = [
   "Aswan University",
@@ -41,6 +40,37 @@ const colors = {
   warmNeutral: "#E6F0D6",
   accentGreen: "#A3C46F",
   darkNeutral: "#2C3E2A",
+};
+
+const trackOptions = {
+  "Information and Communications Technology": [
+    "Communication",
+    "Software Engineering",
+    "Computer Vision",
+    "Embedded Systems",
+    "IoT",
+  ],
+  "Power and Green Environment": [
+    "Power Technologies",
+    "Green Energy",
+    "Water Treatment Solutions",
+    "Sustainable Cities",
+    "Food Security",
+  ],
+  "Civil Engineering": [
+    "Structural Engineering",
+    "Geotechnical Engineering",
+    "Transportation Engineering",
+    "Environmental Engineering",
+    "Construction Management",
+  ],
+  "Architecture Engineering": [
+    "Urban Design",
+    "Sustainable Architecture",
+    "Interior Design",
+    "Landscape Architecture",
+    "Historic Preservation",
+  ],
 };
 
 const FormPage = () => {
@@ -76,12 +106,49 @@ const FormPage = () => {
       lunch: false,
     },
   ]);
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
 
-  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
-  const validateEgyptianPhoneNumber = (phone) =>
-    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateEgyptianNationalId = (id) => /^\d{14}$/.test(id);
+  // Popup Component
+  const Popup = ({ type, message, onClose }) => {
+    const popupStyles = {
+      success: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkGreen,
+      },
+      error: {
+        backgroundColor: "#f44336",
+        borderColor: "#d32f2f",
+      },
+    };
+
+    return (
+      <motion.div
+        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+        style={popupStyles[type]}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        <span>{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      </motion.div>
+    );
+  };
+
+  useEffect(() => {
+    setProjectTrack("");
+    setOtherTrack("");
+  }, [projectCategory]);
 
   const handleAddMember = () => {
     if (members.length < 7) {
@@ -135,6 +202,12 @@ const FormPage = () => {
     }
   };
 
+  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
+  const validateEgyptianPhoneNumber = (phone) =>
+    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEgyptianNationalId = (id) => /^\d{14}$/.test(id);
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -149,8 +222,20 @@ const FormPage = () => {
     // Faculty
     if (!faculty.trim()) {
       newErrors.faculty = "Faculty is required.";
-    } else if (faculty.trim().length < 3) {
-      newErrors.faculty = "Faculty must be at least 3 characters long.";
+    }
+
+    // Team Leader Email
+    if (!teamLeaderEmail.trim()) {
+      newErrors.teamLeaderEmail = "Team leader's email is required.";
+    } else if (!validateEmail(teamLeaderEmail)) {
+      newErrors.teamLeaderEmail = "Invalid email format.";
+    }
+
+    // Team Leader Phone
+    if (!teamLeaderPhone.trim()) {
+      newErrors.teamLeaderPhone = "Team leader's phone number is required.";
+    } else if (!validateEgyptianPhoneNumber(teamLeaderPhone)) {
+      newErrors.teamLeaderPhone = "Invalid phone number.";
     }
 
     // Project Abstract
@@ -173,25 +258,19 @@ const FormPage = () => {
       newErrors.otherCategory = "Please specify the category.";
     }
 
-    // Project Track
-    if (!projectTrack) {
+    // Project Track (validate if the category has tracks)
+    const categoriesWithTracks = [
+      "Information and Communications Technology",
+      "Power and Green Environment",
+    ];
+    if (categoriesWithTracks.includes(projectCategory) && !projectTrack) {
       newErrors.projectTrack = "Project track is required.";
-    } else if (projectTrack === "Other" && !otherTrack.trim()) {
+    } else if (
+      projectTrack === "Other" &&
+      categoriesWithTracks.includes(projectCategory) &&
+      !otherTrack.trim()
+    ) {
       newErrors.otherTrack = "Please specify the track.";
-    }
-
-    // Team Leader Email
-    if (!teamLeaderEmail.trim()) {
-      newErrors.teamLeaderEmail = "Team leader's email is required.";
-    } else if (!validateEmail(teamLeaderEmail)) {
-      newErrors.teamLeaderEmail = "Invalid email format for team leader.";
-    }
-
-    // Team Leader Phone
-    if (!teamLeaderPhone.trim()) {
-      newErrors.teamLeaderPhone = "Team leader's WhatsApp number is required.";
-    } else if (!validateEgyptianPhoneNumber(teamLeaderPhone)) {
-      newErrors.teamLeaderPhone = "Invalid WhatsApp number for team leader.";
     }
 
     // Members Validation
@@ -199,7 +278,7 @@ const FormPage = () => {
       if (!validateName(member.name)) {
         newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
-        } name is required.`;
+        } name must be at least 3 characters long.`;
       }
       if (!validateEgyptianPhoneNumber(member.phone)) {
         newErrors[
@@ -223,17 +302,17 @@ const FormPage = () => {
   };
 
   const resetForm = () => {
-    setHasPrototype(false);
-    setProjectCategory("");
-    setProjectTrack("");
-    setOtherCategory("");
-    setOtherTrack("");
     setProjectTitle("");
     setFaculty("");
     setTeamLeaderEmail("");
     setTeamLeaderPhone("");
-    setProjectAbstract("");
+    setHasPrototype(false);
     setPrototypeDimensions("");
+    setProjectCategory("");
+    setProjectTrack("");
+    setOtherCategory("");
+    setOtherTrack("");
+    setProjectAbstract("");
     setErrors({});
     setMembers([
       {
@@ -260,8 +339,19 @@ const FormPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      alert("Form submitted successfully!");
+      setPopup({
+        visible: true,
+        type: "success",
+        message: "Form submitted successfully!",
+      });
+
       resetForm();
+
+      setTimeout(() => {
+        setPopup({ visible: false, type: "", message: "" });
+      }, 5000);
+    } else {
+      console.log(errors);
     }
   };
 
@@ -362,7 +452,10 @@ const FormPage = () => {
             type="text"
             placeholder="Enter your project title"
             className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
-            style={{ borderColor: colors.lightGreen }}
+            style={{
+              borderColor: colors.lightGreen,
+              boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+            }}
             value={projectTitle}
             onChange={(e) => setProjectTitle(e.target.value)}
             required
@@ -432,60 +525,70 @@ const FormPage = () => {
         </motion.div>
 
         {/* Project Track */}
-        <motion.div
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <label
-            className="block text-sm font-medium mb-1"
-            style={{ color: colors.darkNeutral }}
-          >
-            Project Track *
-          </label>
-          <select
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#8FB24C] hover:shadow-md"
-            style={{
-              borderColor: colors.lightGreen,
-              color: colors.darkNeutral,
-            }}
-            value={projectTrack}
-            onChange={(e) => setProjectTrack(e.target.value)}
-            required
-          >
-            <option value="">Select Track</option>
-            <option>Communication</option>
-            <option>Software Engineering</option>
-            <option>Computer Vision</option>
-            <option>Embedded Systems</option>
-            <option>IoT</option>
-            <option>Other</option>
-          </select>
-          {errors.projectTrack && (
-            <p className="text-sm text-red-500 mt-1">{errors.projectTrack}</p>
-          )}
-          {projectTrack === "Other" && (
+        {projectCategory &&
+          [
+            "Information and Communications Technology",
+            "Power and Green Environment",
+          ].includes(projectCategory) && (
             <motion.div
-              className="mt-2"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
             >
-              <input
-                type="text"
-                placeholder="Specify track"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={otherTrack}
-                onChange={(e) => setOtherTrack(e.target.value)}
+              <label
+                className="block text-sm font-medium mb-1"
+                style={{ color: colors.darkNeutral }}
+              >
+                Project Track *
+              </label>
+              <select
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#8FB24C] hover:shadow-md"
+                style={{
+                  borderColor: colors.lightGreen,
+                  color: colors.darkNeutral,
+                }}
+                value={projectTrack}
+                onChange={(e) => setProjectTrack(e.target.value)}
                 required
-              />
-              {errors.otherTrack && (
-                <p className="text-sm text-red-500 mt-1">{errors.otherTrack}</p>
+              >
+                <option value="">Select Track</option>
+                {trackOptions[projectCategory]?.map((track, index) => (
+                  <option key={index} value={track}>
+                    {track}
+                  </option>
+                ))}
+                <option value="Other">Other</option>
+              </select>
+              {errors.projectTrack && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.projectTrack}
+                </p>
+              )}
+              {projectTrack === "Other" && (
+                <motion.div
+                  className="mt-2"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Specify track"
+                    className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
+                    style={{ borderColor: colors.lightGreen }}
+                    value={otherTrack}
+                    onChange={(e) => setOtherTrack(e.target.value)}
+                    required
+                  />
+                  {errors.otherTrack && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.otherTrack}
+                    </p>
+                  )}
+                </motion.div>
               )}
             </motion.div>
           )}
-        </motion.div>
 
         {/* Prototype Dimensions */}
         <motion.div
@@ -497,39 +600,32 @@ const FormPage = () => {
             className="block text-sm font-medium mb-1"
             style={{ color: colors.darkNeutral }}
           >
-            Does the project have a prototype?
+            Prototype Dimensions (if applicable)
           </label>
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
-                style={{ color: colors.primary }}
-                onChange={(e) => setHasPrototype(e.target.checked)}
-              />
-              <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                Yes
-              </span>
-            </label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
+              style={{ color: colors.lighterBlue }}
+              checked={showPrototypeInput}
+              onChange={(e) => setShowPrototypeInput(e.target.checked)}
+            />
+            <span style={{ color: colors.darkNeutral }}>
+              Include Prototype Dimensions
+            </span>
           </div>
-          {hasPrototype && (
+          {showPrototypeInput && (
             <motion.div
-              className="mt-2"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.3 }}
+              className="mt-2"
             >
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Prototype Dimensions *
-              </label>
               <input
                 type="text"
                 placeholder="Enter prototype dimensions"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:shadow-md"
+                style={{ borderColor: colors.lighterBlue }}
                 value={prototypeDimensions}
                 onChange={(e) => setPrototypeDimensions(e.target.value)}
                 required
@@ -893,7 +989,7 @@ const FormPage = () => {
               <input
                 type="email"
                 placeholder="Team leader's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
                 value={teamLeaderEmail}
                 onChange={(e) => setTeamLeaderEmail(e.target.value)}
@@ -915,7 +1011,7 @@ const FormPage = () => {
               <input
                 type="tel"
                 placeholder="Team leader's WhatsApp"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
                 style={{ borderColor: colors.lightGreen }}
                 value={teamLeaderPhone}
                 onChange={(e) => setTeamLeaderPhone(e.target.value)}
@@ -951,6 +1047,15 @@ const FormPage = () => {
           Submit
         </motion.button>
       </motion.form>
+
+      {/* Popup */}
+      {popup.visible && (
+        <Popup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup({ visible: false, type: "", message: "" })}
+        />
+      )}
     </motion.div>
   );
 };
