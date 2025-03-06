@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import ClipLoader from "react-spinners/ClipLoader";
+// import { registergradproject } from "../../../../services/register.service";
 import {
   FaGraduationCap,
   FaBook,
@@ -73,18 +75,107 @@ const trackOptions = {
   ],
 };
 
+// Floating Icons Component
+const FloatingIcons = React.memo(() => {
+  return (
+    <>
+      {Array.from({ length: 16 }).map((_, i) => {
+        const Icon = icons[i % icons.length];
+        const size = Math.random() * 60 + 40;
+        const color = colors.primary;
+
+        return (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              color,
+            }}
+            animate={{
+              y: [0, -50, 0],
+              rotate: [0, 10, -10, 0],
+              filter: [
+                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
+                "blur(3px) drop-shadow(0px 4px 10px rgba(255,255,255,0.6))",
+                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
+              ],
+            }}
+            transition={{
+              duration: Math.random() * 6 + 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 3,
+            }}
+          >
+            <Icon size={size} />
+          </motion.div>
+        );
+      })}
+    </>
+  );
+});
+
+// Popup Component
+const Popup = ({ type, message, onClose, isLoading }) => {
+  const popupStyles = {
+    success: {
+      backgroundColor: colors.primary,
+      borderColor: colors.darkGreen,
+    },
+    error: {
+      backgroundColor: "#f44336",
+      borderColor: "#d32f2f",
+    },
+    loading: {
+      backgroundColor: colors.primary,
+      borderColor: colors.darkGreen,
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+      style={popupStyles[type]}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2">
+          <ClipLoader color={"#fff"} size={18} />
+          <span>{message}</span>
+        </div>
+      ) : (
+        <span>{message}</span>
+      )}
+      {!isLoading && (
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      )}
+    </motion.div>
+  );
+};
+
 const FormPage = () => {
   const [projectTitle, setProjectTitle] = useState("");
-  const [faculty, setFaculty] = useState("");
-  const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
-  const [teamLeaderPhone, setTeamLeaderPhone] = useState("");
+  const [projectCategory, setProjectCategory] = useState("");
+  const [otherCategory, setOtherCategory] = useState("");
+  const [projectTrack, setProjectTrack] = useState("");
+  const [otherTrack, setOtherTrack] = useState("");
   const [hasPrototype, setHasPrototype] = useState(false);
   const [prototypeDimensions, setPrototypeDimensions] = useState("");
-  const [projectCategory, setProjectCategory] = useState("");
-  const [projectTrack, setProjectTrack] = useState("");
-  const [otherCategory, setOtherCategory] = useState("");
-  const [otherTrack, setOtherTrack] = useState("");
   const [projectAbstract, setProjectAbstract] = useState("");
+  const [projectProposal, setProjectProposal] = useState(null);
+  const [university, setUniversity] = useState("");
+  const [faculty, setFaculty] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [members, setMembers] = useState([
     {
@@ -95,6 +186,7 @@ const FormPage = () => {
       nationalId: "",
       accommodation: false,
       lunch: false,
+      isLeader: true,
     },
     {
       id: 2,
@@ -104,6 +196,7 @@ const FormPage = () => {
       nationalId: "",
       accommodation: false,
       lunch: false,
+      isLeader: false,
     },
   ]);
   const [popup, setPopup] = useState({
@@ -112,38 +205,12 @@ const FormPage = () => {
     message: "",
   });
 
-  // Popup Component
-  const Popup = ({ type, message, onClose }) => {
-    const popupStyles = {
-      success: {
-        backgroundColor: colors.primary,
-        borderColor: colors.darkGreen,
-      },
-      error: {
-        backgroundColor: "#f44336",
-        borderColor: "#d32f2f",
-      },
-    };
-
-    return (
-      <motion.div
-        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
-        style={popupStyles[type]}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          &times;
-        </button>
-      </motion.div>
-    );
-  };
+  // Validation functions
+  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
+  const validateEgyptianPhoneNumber = (phone) =>
+    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateNationalId = (id) => /^\d{14}$/.test(id);
 
   useEffect(() => {
     setProjectTrack("");
@@ -202,99 +269,89 @@ const FormPage = () => {
     }
   };
 
-  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
-  const validateEgyptianPhoneNumber = (phone) =>
-    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateEgyptianNationalId = (id) => /^\d{14}$/.test(id);
-
   const validateForm = () => {
     const newErrors = {};
 
     // Project Title
     if (!projectTitle.trim()) {
       newErrors.projectTitle = "Project title is required.";
-    } else if (projectTitle.trim().length < 3) {
+    } else if (!validateName(projectTitle)) {
       newErrors.projectTitle =
-        "Project title must be at least 3 characters long.";
+        "Project title must be at least 3 letters from A-Z.";
     }
 
-    // Faculty
-    if (!faculty.trim()) {
-      newErrors.faculty = "Faculty is required.";
+    // Project Category
+    if (!projectCategory)
+      newErrors.projectCategory = "Project category is required.";
+    if (projectCategory === "Other" && !otherCategory.trim())
+      newErrors.otherCategory = "Please specify the category.";
+
+    // Project Track
+    if (
+      projectCategory !== "Civil Engineering" &&
+      projectCategory !== "Architecture Engineering" &&
+      !projectTrack
+    ) {
+      newErrors.projectTrack = "Project track is required.";
+    } else if (projectTrack === "Other" && !otherTrack.trim()) {
+      newErrors.otherTrack = "Please specify the track.";
     }
 
-    // Team Leader Email
-    if (!teamLeaderEmail.trim()) {
-      newErrors.teamLeaderEmail = "Team leader's email is required.";
-    } else if (!validateEmail(teamLeaderEmail)) {
-      newErrors.teamLeaderEmail = "Invalid email format.";
-    }
-
-    // Team Leader Phone
-    if (!teamLeaderPhone.trim()) {
-      newErrors.teamLeaderPhone = "Team leader's phone number is required.";
-    } else if (!validateEgyptianPhoneNumber(teamLeaderPhone)) {
-      newErrors.teamLeaderPhone = "Invalid phone number.";
-    }
+    // Prototype Dimensions
+    if (hasPrototype && !prototypeDimensions.trim())
+      newErrors.prototypeDimensions = "Prototype dimensions are required.";
 
     // Project Abstract
     if (!projectAbstract.trim()) {
       newErrors.projectAbstract = "Project abstract is required.";
-    } else if (projectAbstract.trim().length < 10) {
-      newErrors.projectAbstract =
-        "Project abstract must be at least 10 characters long.";
     }
 
-    // Prototype Dimensions
-    if (hasPrototype && !prototypeDimensions.trim()) {
-      newErrors.prototypeDimensions = "Prototype dimensions are required.";
-    }
+    // Project Proposal
+    if (!projectProposal)
+      newErrors.projectProposal = "Project proposal is required.";
 
-    // Project Category
-    if (!projectCategory) {
-      newErrors.projectCategory = "Project category is required.";
-    } else if (projectCategory === "Other" && !otherCategory.trim()) {
-      newErrors.otherCategory = "Please specify the category.";
-    }
-
-    // Project Track (validate if the category has tracks)
-    const categoriesWithTracks = [
-      "Information and Communications Technology",
-      "Power and Green Environment",
-    ];
-    if (categoriesWithTracks.includes(projectCategory) && !projectTrack) {
-      newErrors.projectTrack = "Project track is required.";
-    } else if (
-      projectTrack === "Other" &&
-      categoriesWithTracks.includes(projectCategory) &&
-      !otherTrack.trim()
+    // check mime type
+    if (
+      projectProposal &&
+      ![
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(projectProposal.type)
     ) {
-      newErrors.otherTrack = "Please specify the track.";
+      newErrors.projectProposal =
+        "Invalid file type. Please upload a PDF, DOC, or DOCX file.";
     }
+
+    //check file size
+    if (projectProposal && projectProposal.size > 25 * 1024 * 1024) {
+      newErrors.projectProposal = "File size exceeds 25 MB.";
+    }
+
+    // University
+    if (!university.trim()) newErrors.university = "University is required.";
+
+    // Faculty
+    if (!faculty.trim()) newErrors.faculty = "Faculty is required.";
 
     // Members Validation
     members.forEach((member, index) => {
-      if (!validateName(member.name)) {
+      if (!validateName(member.name))
         newErrors[`member${index + 1}Name`] = `Member ${
           index + 1
-        } name must be at least 3 characters long.`;
-      }
-      if (!validateEgyptianPhoneNumber(member.phone)) {
+        } name is required.`;
+      if (!validateEgyptianPhoneNumber(member.phone))
         newErrors[
           `member${index + 1}Phone`
         ] = `Invalid phone number for member ${index + 1}.`;
-      }
-      if (!validateEmail(member.email)) {
+      if (!validateEmail(member.email))
         newErrors[
           `member${index + 1}Email`
         ] = `Invalid email format for member ${index + 1}.`;
-      }
-      if (!validateEgyptianNationalId(member.nationalId)) {
+      if (!validateNationalId(member.nationalId))
         newErrors[
           `member${index + 1}NationalId`
         ] = `Invalid national ID for member ${index + 1}.`;
-      }
     });
 
     setErrors(newErrors);
@@ -303,16 +360,16 @@ const FormPage = () => {
 
   const resetForm = () => {
     setProjectTitle("");
-    setFaculty("");
-    setTeamLeaderEmail("");
-    setTeamLeaderPhone("");
+    setProjectCategory("");
+    setOtherCategory("");
+    setProjectTrack("");
+    setOtherTrack("");
     setHasPrototype(false);
     setPrototypeDimensions("");
-    setProjectCategory("");
-    setProjectTrack("");
-    setOtherCategory("");
-    setOtherTrack("");
     setProjectAbstract("");
+    setProjectProposal(null);
+    setUniversity("");
+    setFaculty("");
     setErrors({});
     setMembers([
       {
@@ -323,6 +380,7 @@ const FormPage = () => {
         nationalId: "",
         accommodation: false,
         lunch: false,
+        isLeader: true,
       },
       {
         id: 2,
@@ -332,25 +390,76 @@ const FormPage = () => {
         nationalId: "",
         accommodation: false,
         lunch: false,
+        isLeader: false,
       },
     ]);
+
+    const form = document.querySelector("form");
+    form.reset();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (validateForm()) {
+      // Simulate API call
       setPopup({
         visible: true,
-        type: "success",
-        message: "Form submitted successfully!",
+        type: "loading",
+        message: "Submitting form...",
       });
 
-      resetForm();
-
       setTimeout(() => {
-        setPopup({ visible: false, type: "", message: "" });
-      }, 5000);
+        setPopup({
+          visible: true,
+          type: "success",
+          message: "Form submitted successfully!",
+        });
+        resetForm();
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setPopup({ visible: false, type: "", message: "" });
+        }, 5000);
+      }, 2000);
+
+      // do not pass id with members
+      // const membersNew = members.map(({ id, ...rest }) => rest);
+
+      // const data = {
+      //   projTitle: projectTitle,
+      //   projCategory: projectCategory,
+      //   projOtherCategory: otherCategory,
+      //   projTrack: projectTrack,
+      //   projOtherTrack: otherTrack,
+      //   projPrototype: showPrototypeInput,
+      //   projPrototypeDim: prototypeDimensions,
+      //   projAbstract: projectAbstract,
+      //   MembersInfo: membersNew,
+      //   University: university,
+      //   Faculty: faculty,
+      //   Year: year,
+      //   LeaderEmail: teamLeaderEmail,
+      //   LeaderPhone: teamLeaderWhatsApp,
+      // };
+
+      // const formData = new FormData();
+      // formData.append("projProposal", projectProposal);
+      // formData.append("data", JSON.stringify(data));
+
+      // registerpregradproject(formData).then((res) => {
+      //   console.log(res);
+      // alert("Form submitted successfully!");
+      // setIsSubmitting(false);
+      // }).catch((err) => {
+      //   console.log(err);
+      //   setIsSubmitting(false);
+      //   alert("An error occurred. Please try again later.");
+      // });
+
+      // resetForm();
     } else {
+      setIsSubmitting(false);
       console.log(errors);
     }
   };
@@ -363,41 +472,8 @@ const FormPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      {/* Floating Graduation Icons */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const Icon = icons[i % icons.length];
-        const size = Math.random() * 60 + 40;
-        const color = colors.primary;
-
-        return (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              color,
-            }}
-            animate={{
-              y: [0, -50, 0],
-              rotate: [0, 10, -10, 0],
-              filter: [
-                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
-                "blur(3px) drop-shadow(0px 4px 10px rgba(255,255,255,0.6))",
-                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
-              ],
-            }}
-            transition={{
-              duration: Math.random() * 6 + 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 3,
-            }}
-          >
-            <Icon size={size} />
-          </motion.div>
-        );
-      })}
+      {/* Floating Icons */}
+      <FloatingIcons />
 
       {/* Gradient Overlay */}
       <div
@@ -484,7 +560,10 @@ const FormPage = () => {
               color: colors.darkNeutral,
             }}
             value={projectCategory}
-            onChange={(e) => setProjectCategory(e.target.value)}
+            onChange={(e) => {
+              setProjectCategory(e.target.value);
+              setOtherCategory("");
+            }}
             required
           >
             <option value="">Select Category</option>
@@ -525,11 +604,8 @@ const FormPage = () => {
         </motion.div>
 
         {/* Project Track */}
-        {projectCategory &&
-          [
-            "Information and Communications Technology",
-            "Power and Green Environment",
-          ].includes(projectCategory) && (
+        {projectCategory !== "Civil Engineering" &&
+          projectCategory !== "Architecture Engineering" && (
             <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -548,15 +624,19 @@ const FormPage = () => {
                   color: colors.darkNeutral,
                 }}
                 value={projectTrack}
-                onChange={(e) => setProjectTrack(e.target.value)}
+                onChange={(e) => {
+                  setProjectTrack(e.target.value);
+                  setOtherTrack("");
+                }}
                 required
               >
                 <option value="">Select Track</option>
-                {trackOptions[projectCategory]?.map((track, index) => (
-                  <option key={index} value={track}>
-                    {track}
-                  </option>
-                ))}
+                {projectCategory &&
+                  trackOptions[projectCategory]?.map((track, index) => (
+                    <option key={index} value={track}>
+                      {track}
+                    </option>
+                  ))}
                 <option value="Other">Other</option>
               </select>
               {errors.projectTrack && (
@@ -594,41 +674,51 @@ const FormPage = () => {
         <motion.div
           initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
         >
           <label
             className="block text-sm font-medium mb-1"
             style={{ color: colors.darkNeutral }}
           >
-            Prototype Dimensions (if applicable)
+            Does the project have a prototype?
           </label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
-              style={{ color: colors.lighterBlue }}
-              checked={showPrototypeInput}
-              onChange={(e) => setShowPrototypeInput(e.target.checked)}
-            />
-            <span style={{ color: colors.darkNeutral }}>
-              Include Prototype Dimensions
-            </span>
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
+                style={{ color: colors.primary }}
+                checked={hasPrototype}
+                onChange={(e) => {
+                  setHasPrototype(e.target.checked);
+                  setPrototypeDimensions("");
+                }}
+              />
+              <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                Yes
+              </span>
+            </label>
           </div>
-          {showPrototypeInput && (
+          {hasPrototype && (
             <motion.div
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3 }}
               className="mt-2"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
+              <label
+                className="block text-sm font-medium mb-1"
+                style={{ color: colors.darkNeutral }}
+              >
+                Prototype Dimensions
+              </label>
               <input
                 type="text"
                 placeholder="Enter prototype dimensions"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
+                style={{ borderColor: colors.lightGreen }}
                 value={prototypeDimensions}
                 onChange={(e) => setPrototypeDimensions(e.target.value)}
-                required
               />
               {errors.prototypeDimensions && (
                 <p className="text-sm text-red-500 mt-1">
@@ -653,7 +743,7 @@ const FormPage = () => {
           </label>
           <textarea
             placeholder="Describe your project"
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#A3C46F] hover:shadow-md"
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#8FB24C] hover:shadow-md"
             style={{ borderColor: colors.lightGreen }}
             rows="4"
             value={projectAbstract}
@@ -693,12 +783,18 @@ const FormPage = () => {
                 color: colors.lightGreen,
               }}
               accept=".pdf, .doc, .docx"
+              onChange={(e) => setProjectProposal(e.target.files[0])}
               required
             />
           </div>
           <p className="mt-2 text-sm" style={{ color: colors.darkNeutral }}>
-            Max 100 MB
+            Max 25 MB
           </p>
+          {errors.projectProposal && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.projectProposal}
+            </p>
+          )}
         </motion.div>
 
         {/* University */}
@@ -720,11 +816,17 @@ const FormPage = () => {
               color: colors.darkNeutral,
             }}
             required
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
           >
+            <option value="">Select University</option>
             {universities.map((uni, index) => (
               <option key={index}>{uni}</option>
             ))}
           </select>
+          {errors.university && (
+            <p className="text-sm text-red-500 mt-1">{errors.university}</p>
+          )}
         </motion.div>
 
         {/* Faculty */}
@@ -759,16 +861,22 @@ const FormPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.3 }}
-          style={{ borderTop: `2px solid ${colors.lightGreen}` }}
+          style={{
+            borderTop: `2px solid ${colors.lightGreen}`,
+            textAlign: "left",
+          }}
         >
-          Note: Free accommodation and lunch are only available for 2 members.
+          All Team members transportation are covered.
+          <br />
+          If you are not studying at Aswan University: Only 2 members will have
+          accommodation.
         </motion.div>
 
         {/* Members Details */}
         {members.map((member, index) => (
           <motion.div
             key={member.id}
-            className="space-y-4 pt-4"
+            className="space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 + index * 0.1 }}
@@ -780,7 +888,7 @@ const FormPage = () => {
               }}
               whileHover={{ x: 5 }}
             >
-              Member #{index + 1}
+              {member.isLeader ? "Leader" : `Member #${index + 1}`}
             </motion.h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -885,19 +993,22 @@ const FormPage = () => {
               </div>
             </div>
 
+            {/* Additional for Leader/Member */}
             <div>
               <label
                 className="block text-sm font-medium mb-1"
                 style={{ color: colors.darkNeutral }}
               >
-                Additional for Member #{index + 1}
+                {member.isLeader
+                  ? "Additional for Leader"
+                  : `Additional for Member #${index + 1}`}
               </label>
               <div className="space-y-2">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
                     className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
-                    style={{ color: colors.primary }}
+                    style={{ color: colors.lightGreen }}
                     checked={member.accommodation}
                     onChange={() => handleAccommodationChange(index)}
                     disabled={
@@ -913,9 +1024,9 @@ const FormPage = () => {
                   <input
                     type="checkbox"
                     className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
-                    style={{ color: colors.primary }}
+                    style={{ color: colors.lightGreen }}
                     checked={member.lunch}
-                    onChange={(e) => handleLunchChange(index, e.target.checked)}
+                    onChange={() => handleLunchChange(index)}
                     disabled={
                       !member.lunch &&
                       members.filter((m) => m.lunch).length >= 2
@@ -928,7 +1039,7 @@ const FormPage = () => {
               </div>
             </div>
 
-            {/* Remove Member Button*/}
+            {/* Remove Member Button */}
             {index >= 2 && (
               <button
                 type="button"
@@ -964,75 +1075,12 @@ const FormPage = () => {
           </motion.div>
         )}
 
-        {/* Contact Information - Team Leader */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="p-4 rounded-lg"
-          style={{ backgroundColor: colors.warmNeutral }}
-        >
-          <h3
-            className="text-xl font-semibold mb-4"
-            style={{ color: colors.primary }}
-          >
-            Contact Information - Team Leader
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                placeholder="Team leader's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={teamLeaderEmail}
-                onChange={(e) => setTeamLeaderEmail(e.target.value)}
-                required
-              />
-              {errors.teamLeaderEmail && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderEmail}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                WhatsApp Number *
-              </label>
-              <input
-                type="tel"
-                placeholder="Team leader's WhatsApp"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:colors.darkNeutral hover:border-[#8FB24C] hover:shadow-md"
-                style={{ borderColor: colors.lightGreen }}
-                value={teamLeaderPhone}
-                onChange={(e) => setTeamLeaderPhone(e.target.value)}
-                required
-              />
-              {errors.teamLeaderPhone && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderPhone}
-                </p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
         {/* Submit Button */}
         <motion.button
           type="submit"
           className="w-full py-3 text-white font-semibold rounded-lg transition-all"
           style={{
             background: `linear-gradient(to right, ${colors.primary}, ${colors.accentGreen})`,
-            cursor: "pointer",
           }}
           whileHover={{
             scale: 1.05,
@@ -1044,7 +1092,7 @@ const FormPage = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring" }}
         >
-          Submit
+          {isSubmitting ? <ClipLoader color={"#fff"} size={18} /> : "Submit"}
         </motion.button>
       </motion.form>
 
@@ -1054,6 +1102,7 @@ const FormPage = () => {
           type={popup.type}
           message={popup.message}
           onClose={() => setPopup({ visible: false, type: "", message: "" })}
+          isLoading={popup.type === "loading"}
         />
       )}
     </motion.div>

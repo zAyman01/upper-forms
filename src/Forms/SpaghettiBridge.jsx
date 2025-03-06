@@ -1,11 +1,56 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import ClipLoader from "react-spinners/ClipLoader";
 import { FaBridge, FaScissors } from "react-icons/fa6";
 import { PiBridgeBold } from "react-icons/pi";
 import { FaHardHat } from "react-icons/fa";
+// import { registerspaghetti } from "../../../../services/register.service";
 
+// Floating Icons Component
 const icons = [FaBridge, PiBridgeBold, FaScissors, FaHardHat];
 
+const FloatingIcons = React.memo(() => {
+  return (
+    <>
+      {Array.from({ length: 16 }).map((_, i) => {
+        const Icon = icons[i % icons.length];
+        const size = Math.random() * 60 + 40;
+        const color = "#FFD700"; // Assuming primary color is #FFD700
+
+        return (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              color,
+            }}
+            animate={{
+              y: [0, -50, 0],
+              rotate: [0, 10, -10, 0],
+              filter: [
+                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
+                "blur(3px) drop-shadow(0px 4px 10px rgba(255,255,255,0.6))",
+                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
+              ],
+            }}
+            transition={{
+              duration: Math.random() * 6 + 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 3,
+            }}
+          >
+            <Icon size={size} />
+          </motion.div>
+        );
+      })}
+    </>
+  );
+});
+
+// Main Form Component
 const universities = [
   "Aswan University",
   "AAST Aswan",
@@ -38,6 +83,7 @@ const SpaghettiBridgeForm = () => {
   const [university, setUniversity] = useState("");
   const [otherUniversity, setOtherUniversity] = useState("");
   const [faculty, setFaculty] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [members, setMembers] = useState([
     {
       id: 1,
@@ -51,7 +97,6 @@ const SpaghettiBridgeForm = () => {
   const [howDidYouKnow, setHowDidYouKnow] = useState("");
   const [communityPartner, setCommunityPartner] = useState("");
   const [errors, setErrors] = useState({});
-
   const [popup, setPopup] = useState({
     visible: false,
     type: "success",
@@ -59,7 +104,7 @@ const SpaghettiBridgeForm = () => {
   });
 
   // Popup Component
-  const Popup = ({ type, message, onClose }) => {
+  const Popup = ({ type, message, onClose, isLoading }) => {
     const popupStyles = {
       success: {
         backgroundColor: colors.primary,
@@ -68,6 +113,10 @@ const SpaghettiBridgeForm = () => {
       error: {
         backgroundColor: "#f44336",
         borderColor: "#d32f2f",
+      },
+      loading: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkYellow,
       },
     };
 
@@ -80,13 +129,22 @@ const SpaghettiBridgeForm = () => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
       >
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          &times;
-        </button>
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <ClipLoader color={"#fff"} size={18} />
+            <span>{message}</span>
+          </div>
+        ) : (
+          <span>{message}</span>
+        )}
+        {!isLoading && (
+          <button
+            onClick={onClose}
+            className="ml-4 text-white hover:text-gray-200"
+          >
+            &times;
+          </button>
+        )}
       </motion.div>
     );
   };
@@ -123,6 +181,31 @@ const SpaghettiBridgeForm = () => {
     setMembers(updatedMembers);
   };
 
+  const handleAccommodationChange = (index) => {
+    const updatedMembers = [...members];
+    const currentAccommodationCount = updatedMembers.filter(
+      (member) => member.accommodation
+    ).length;
+
+    if (currentAccommodationCount < 2 || updatedMembers[index].accommodation) {
+      updatedMembers[index].accommodation =
+        !updatedMembers[index].accommodation;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleLunchChange = (index) => {
+    const updatedMembers = [...members];
+    const currentLunchCount = updatedMembers.filter(
+      (member) => member.lunch
+    ).length;
+
+    if (currentLunchCount < 2 || updatedMembers[index].lunch) {
+      updatedMembers[index].lunch = !updatedMembers[index].lunch;
+      setMembers(updatedMembers);
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -143,6 +226,8 @@ const SpaghettiBridgeForm = () => {
     // Faculty
     if (!faculty.trim()) {
       newErrors.faculty = "Faculty is required.";
+    } else if (faculty.trim().length < 3) {
+      newErrors.faculty = "Faculty must be at least 3 characters long.";
     }
 
     // Members Validation
@@ -206,19 +291,66 @@ const SpaghettiBridgeForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (validateForm()) {
+      // Simulate API call
       setPopup({
         visible: true,
-        type: "success",
-        message: "Form submitted successfully!",
+        type: "loading",
+        message: "Submitting form...",
       });
 
-      resetForm();
-
       setTimeout(() => {
-        setPopup({ visible: false, type: "", message: "" });
-      }, 5000);
+        setPopup({
+          visible: true,
+          type: "success",
+          message: "Form submitted successfully!",
+        });
+        resetForm();
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setPopup({ visible: false, type: "", message: "" });
+        }, 5000);
+      }, 2000);
+
+      // do not pass id with members
+      // const membersNew = members.map(({ id, ...rest }) => rest);
+
+      // const data = {
+      //   projTitle: projectTitle,
+      //   projCategory: projectCategory,
+      //   projOtherCategory: otherCategory,
+      //   projTrack: projectTrack,
+      //   projOtherTrack: otherTrack,
+      //   projPrototype: showPrototypeInput,
+      //   projPrototypeDim: prototypeDimensions,
+      //   projAbstract: projectAbstract,
+      //   MembersInfo: membersNew,
+      //   University: university,
+      //   Faculty: faculty,
+      //   Year: year,
+      //   LeaderEmail: teamLeaderEmail,
+      //   LeaderPhone: teamLeaderWhatsApp,
+      // };
+
+      // const formData = new FormData();
+      // formData.append("projProposal", projectProposal);
+      // formData.append("data", JSON.stringify(data));
+
+      // registerpregradproject(formData).then((res) => {
+      //   console.log(res);
+      // alert("Form submitted successfully!");
+      // setIsSubmitting(false);
+      // }).catch((err) => {
+      //   console.log(err);
+      //   setIsSubmitting(false);
+      //   alert("An error occurred. Please try again later.");
+      // });
+
+      // resetForm();
     } else {
+      setIsSubmitting(false);
       console.log(errors);
     }
   };
@@ -232,40 +364,7 @@ const SpaghettiBridgeForm = () => {
       transition={{ duration: 1 }}
     >
       {/* Floating Icons */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const Icon = icons[i % icons.length];
-        const size = Math.random() * 60 + 40;
-        const color = colors.primary;
-
-        return (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              color,
-            }}
-            animate={{
-              y: [0, -50, 0],
-              rotate: [0, 10, -10, 0],
-              filter: [
-                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
-                "blur(3px) drop-shadow(0px 4px 10px rgba(255,255,255,0.6))",
-                "blur(0px) drop-shadow(0px 0px 0px rgba(255,255,255,0))",
-              ],
-            }}
-            transition={{
-              duration: Math.random() * 6 + 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 3,
-            }}
-          >
-            <Icon size={size} />
-          </motion.div>
-        );
-      })}
+      <FloatingIcons />
 
       {/* Gradient Overlay */}
       <div
@@ -352,7 +451,10 @@ const SpaghettiBridgeForm = () => {
               color: colors.darkNeutral,
             }}
             value={university}
-            onChange={(e) => setUniversity(e.target.value)}
+            onChange={(e) => {
+              setUniversity(e.target.value);
+              setOtherUniversity("");
+            }}
             required
           >
             <option value="">Select University</option>
@@ -414,11 +516,28 @@ const SpaghettiBridgeForm = () => {
           )}
         </motion.div>
 
+        {/* Red Note */}
+        <motion.div
+          className="text-center text-sm text-red-500 pt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.3 }}
+          style={{
+            borderTop: `2px solid ${colors.lightYellow}`,
+            textAlign: "left",
+          }}
+        >
+          All Team members transportation are covered.
+          <br />
+          If you are not studying at Aswan University: Only 2 members will have
+          accommodation.
+        </motion.div>
+
         {/* Members Details */}
         {members.map((member, index) => (
           <motion.div
             key={member.id}
-            className="space-y-4 pt-4"
+            className="space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 + index * 0.1 }}
@@ -432,16 +551,6 @@ const SpaghettiBridgeForm = () => {
             >
               {member.isLeader ? "Leader" : `Member #${index + 1}`}
             </motion.h3>
-
-            {/* Add the note under the leader's information */}
-            {member.isLeader && (
-              <p className="text-sm text-red-500 mt-2">
-                All Team members transportation are covered.
-                <br />
-                If you are not studying at Aswan University: Only 2 members will
-                have accommodation.
-              </p>
-            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -545,6 +654,51 @@ const SpaghettiBridgeForm = () => {
               </div>
             </div>
 
+            <div>
+              <label
+                className="block text-sm font-medium mb-1"
+                style={{ color: colors.darkNeutral }}
+              >
+                {index === 0
+                  ? "Additional for Leader"
+                  : `Additional for Member #${index + 1}`}
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
+                    style={{ color: colors.primary }}
+                    checked={member.accommodation}
+                    onChange={() => handleAccommodationChange(index)}
+                    disabled={
+                      !member.accommodation &&
+                      members.filter((m) => m.accommodation).length >= 2
+                    }
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Accommodation
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#8FB24C] hover:shadow-md"
+                    style={{ color: colors.primary }}
+                    checked={member.lunch}
+                    onChange={(e) => handleLunchChange(index, e.target.checked)}
+                    disabled={
+                      !member.lunch &&
+                      members.filter((m) => m.lunch).length >= 2
+                    }
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Lunch
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Remove Member Button*/}
             {index >= 1 && (
               <button
@@ -600,7 +754,10 @@ const SpaghettiBridgeForm = () => {
               color: colors.darkNeutral,
             }}
             value={howDidYouKnow}
-            onChange={(e) => setHowDidYouKnow(e.target.value)}
+            onChange={(e) => {
+              setHowDidYouKnow(e.target.value);
+              setCommunityPartner("");
+            }}
             required
           >
             <option value="">Select an option</option>
@@ -656,15 +813,17 @@ const SpaghettiBridgeForm = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring" }}
         >
-          Submit
+          {isSubmitting ? <ClipLoader color={"#fff"} size={18} /> : "Submit"}
         </motion.button>
       </motion.form>
+
       {/* Popup */}
       {popup.visible && (
         <Popup
           type={popup.type}
           message={popup.message}
           onClose={() => setPopup({ visible: false, type: "", message: "" })}
+          isLoading={popup.type === "loading"}
         />
       )}
     </motion.div>

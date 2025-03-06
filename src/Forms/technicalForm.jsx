@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import ClipLoader from "react-spinners/ClipLoader";
+// import { registertechschoolsproject } from "../../../../services/register.service";
 import {
   FaCode,
   FaCogs,
@@ -31,239 +33,10 @@ const colors = {
   darkNeutral: "#2C3E2F",
 };
 
-const TechnicalFormSubmission = () => {
-  const [projectTitle, setProjectTitle] = useState("");
-  const [projectCategory, setProjectCategory] = useState("");
-  const [otherCategory, setOtherCategory] = useState("");
-  const [hasPrototype, setHasPrototype] = useState(false);
-  const [prototypeDimensions, setPrototypeDimensions] = useState("");
-    const [showPrototypeInput, setShowPrototypeInput] = useState(false);
-  const [projectAbstract, setProjectAbstract] = useState("");
-  const [educationalAdministration, setEducationalAdministration] =
-    useState("");
-  const [school, setSchool] = useState("");
-  const [members, setMembers] = useState([
-    {
-      id: 1,
-      name: "",
-      phone: "",
-      email: "",
-      nationalId: "",
-      accommodation: false,
-    },
-  ]);
-  const [supervisorName, setSupervisorName] = useState("");
-  const [supervisorPhone, setSupervisorPhone] = useState("");
-  const [supervisorEmail, setSupervisorEmail] = useState("");
-  const [supervisorNationalId, setSupervisorNationalId] = useState("");
-  const [supervisorAccommodation, setSupervisorAccommodation] = useState(false);
-  const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
-  const [teamLeaderWhatsApp, setTeamLeaderWhatsApp] = useState("");
-  const [errors, setErrors] = useState({});
-  const [popup, setPopup] = useState({
-    visible: false,
-    type: "success",
-    message: "",
-  });
-
-  // Popup Component
-  const Popup = ({ type, message, onClose }) => {
-    const popupStyles = {
-      success: {
-        backgroundColor: colors.primary,
-        borderColor: colors.darkGreen,
-      },
-      error: {
-        backgroundColor: "#f44336",
-        borderColor: "#d32f2f",
-      },
-    };
-
-    return (
-      <motion.div
-        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
-        style={popupStyles[type]}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          &times;
-        </button>
-      </motion.div>
-    );
-  };
-
-
-  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
-  const validateEgyptianPhoneNumber = (phone) =>
-    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateNationalId = (id) => /^\d{14}$/.test(id);
-
-  const handleAddMember = () => {
-    if (members.length < 5) {
-      setMembers([
-        ...members,
-        {
-          id: members.length + 1,
-          name: "",
-          phone: "",
-          email: "",
-          nationalId: "",
-          accommodation: false,
-        },
-      ]);
-    }
-  };
-
-  const handleRemoveMember = (id) => {
-    setMembers(members.filter((member) => member.id !== id));
-  };
-
-  const handleMemberChange = (index, field, value) => {
-    const updatedMembers = [...members];
-    updatedMembers[index][field] = value;
-    setMembers(updatedMembers);
-  };
-
-  const handleAccommodationChange = (index) => {
-    const updatedMembers = [...members];
-    const currentAccommodationCount = updatedMembers.filter(
-      (member) => member.accommodation
-    ).length;
-
-    if (currentAccommodationCount < 2 || updatedMembers[index].accommodation) {
-      updatedMembers[index].accommodation =
-        !updatedMembers[index].accommodation;
-      setMembers(updatedMembers);
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (showPrototypeInput && !prototypeDimensions.trim()) {
-      newErrors.prototypeDimensions = "Prototype dimensions are required.";
-    }
-
-    if (!projectCategory)
-      newErrors.projectCategory = "Project category is required.";
-    if (projectCategory === "Other" && !validateName(otherCategory)) {
-      newErrors.otherCategory =
-        "Please specify the category (at least 3 letters).";
-    }
-
-    if (!projectAbstract.trim()) {
-      newErrors.projectAbstract = "Project abstract is required.";
-    } else if (projectAbstract.length < 5) {
-      newErrors.projectAbstract =
-        "Project abstract must be at least 5 characters long.";
-    }
-
-    if (!educationalAdministration)
-      newErrors.educationalAdministration =
-        "Educational administration is required.";
-
-    if (!validateName(school))
-      newErrors.school = "School is required and must be at least 3 letters.";
-
-    // Members Validation
-    members.forEach((member, index) => {
-      if (!validateName(member.name))
-        newErrors[`member${index + 1}Name`] = `Member ${
-          index + 1
-        } name must be at least 3 letters.`;
-      if (!validateEgyptianPhoneNumber(member.phone))
-        newErrors[
-          `member${index + 1}Phone`
-        ] = `Invalid phone number for member ${index + 1}.`;
-      if (!validateEmail(member.email))
-        newErrors[
-          `member${index + 1}Email`
-        ] = `Invalid email format for member ${index + 1}.`;
-      if (!validateNationalId(member.nationalId))
-        newErrors[
-          `member${index + 1}NationalId`
-        ] = `Invalid national ID for member ${index + 1}.`;
-    });
-
-    if (!validateName(supervisorName))
-      newErrors.supervisorName =
-        "Supervisor name must be at least 3 letters.";
-    if (!validateEgyptianPhoneNumber(supervisorPhone))
-      newErrors.supervisorPhone = "Invalid Egyptian phone number.";
-    if (supervisorEmail && !validateEmail(supervisorEmail))
-      newErrors.supervisorEmail = "Invalid email format.";
-    if (!validateNationalId(supervisorNationalId))
-      newErrors.supervisorNationalId = "Invalid national ID.";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      setPopup({
-        visible: true,
-        type: "success",
-        message: "Form submitted successfully!",
-      });
-
-      resetForm();
-
-      setTimeout(() => {
-        setPopup({ visible: false, type: "", message: "" });
-      }, 5000);
-    } else {
-      console.log(errors);
-    }
-  };
-
-  const resetForm = () => {
-    setProjectTitle("");
-    setProjectCategory("");
-    setOtherCategory("");
-    setHasPrototype(false);
-    setPrototypeDimensions("");
-    setProjectAbstract("");
-    setEducationalAdministration("");
-    setSchool("");
-    setMembers([
-      {
-        id: 1,
-        name: "",
-        phone: "",
-        email: "",
-        nationalId: "",
-        accommodation: false,
-      },
-    ]);
-    setSupervisorName("");
-    setSupervisorPhone("");
-    setSupervisorEmail("");
-    setSupervisorNationalId("");
-    setSupervisorAccommodation(false);
-    setTeamLeaderEmail("");
-    setTeamLeaderWhatsApp("");
-    setErrors({});
-  };
-
+// Floating Icons Component
+const FloatingIcons = React.memo(() => {
   return (
-    <motion.div
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: colors.warmNeutral }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
-      {/* Floating Technical Icons */}
+    <>
       {Array.from({ length: 12 }).map((_, i) => {
         const Icon = icons[i % icons.length];
         const size = Math.random() * 60 + 30;
@@ -298,6 +71,378 @@ const TechnicalFormSubmission = () => {
           </motion.div>
         );
       })}
+    </>
+  );
+});
+
+// Popup Component
+const Popup = ({ type, message, onClose, isLoading }) => {
+  const popupStyles = {
+    success: {
+      backgroundColor: colors.primary,
+      borderColor: colors.darkGreen,
+    },
+    error: {
+      backgroundColor: "#f44336",
+      borderColor: "#d32f2f",
+    },
+    loading: {
+      backgroundColor: colors.primary,
+      borderColor: colors.darkGreen,
+    },
+  };
+
+  return (
+    <motion.div
+      className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+      style={popupStyles[type]}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2">
+          <ClipLoader color={"#fff"} size={18} />
+          <span>{message}</span>
+        </div>
+      ) : (
+        <span>{message}</span>
+      )}
+      {!isLoading && (
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-gray-200"
+        >
+          &times;
+        </button>
+      )}
+    </motion.div>
+  );
+};
+
+const TechnicalFormSubmission = () => {
+  const [projectTitle, setProjectTitle] = useState("");
+  const [projectCategory, setProjectCategory] = useState("");
+  const [otherCategory, setOtherCategory] = useState("");
+  const [hasPrototype, setHasPrototype] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [prototypeDimensions, setPrototypeDimensions] = useState("");
+  const [projectAbstract, setProjectAbstract] = useState("");
+  const [educationalAdministration, setEducationalAdministration] =
+    useState("");
+  const [school, setSchool] = useState("");
+  const [members, setMembers] = useState([
+    {
+      id: 1,
+      name: "",
+      phone: "",
+      email: "",
+      nationalId: "",
+      accommodation: false,
+      lunch: false,
+    },
+  ]);
+  const [supervisorName, setSupervisorName] = useState("");
+  const [supervisorPhone, setSupervisorPhone] = useState("");
+  const [supervisorEmail, setSupervisorEmail] = useState("");
+  const [supervisorNationalId, setSupervisorNationalId] = useState("");
+  const [supervisorAccommodation, setSupervisorAccommodation] = useState(false);
+  const [supervisorLunch, setSupervisorLunch] = useState(false);
+  const [projectProposal, setProjectProposal] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
+
+  // Validation functions
+  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
+  const validateEgyptianPhoneNumber = (phone) =>
+    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateNationalId = (id) => /^\d{14}$/.test(id);
+
+  // Handle accommodation and lunch logic
+  const totalSelectedAccommodation = () => {
+    let total = 0;
+    members.forEach((member) => {
+      if (member.accommodation) total++;
+    });
+    if (supervisorAccommodation) total++;
+    return total;
+  };
+  const handleAddMember = () => {
+    if (members.length < 7) {
+      setMembers([
+        ...members,
+        {
+          id: members.length + 1,
+          name: "",
+          phone: "",
+          email: "",
+          nationalId: "",
+          accommodation: false,
+          lunch: false,
+          isLeader: false,
+        },
+      ]);
+    }
+  };
+  const handleRemoveMember = (id) => {
+    setMembers(members.filter((member) => member.id !== id));
+  };
+
+  const handleMemberChange = (index, field, value) => {
+    const updatedMembers = [...members];
+    updatedMembers[index][field] = value;
+    setMembers(updatedMembers);
+  };
+
+  const totalSelectedLunch = () => {
+    let total = 0;
+    members.forEach((member) => {
+      if (member.lunch) total++;
+    });
+    if (supervisorLunch) total++;
+    return total;
+  };
+
+  const handleAccommodationChange = (index) => {
+    const updatedMembers = [...members];
+    const currentTotal = totalSelectedAccommodation();
+
+    if (currentTotal < 2 || updatedMembers[index].accommodation) {
+      updatedMembers[index].accommodation =
+        !updatedMembers[index].accommodation;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleLunchChange = (index) => {
+    const updatedMembers = [...members];
+    const currentTotal = totalSelectedLunch();
+
+    if (currentTotal < 2 || updatedMembers[index].lunch) {
+      updatedMembers[index].lunch = !updatedMembers[index].lunch;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleSupervisorAccommodationChange = (e) => {
+    const currentTotal = totalSelectedAccommodation();
+
+    if (currentTotal < 2 || supervisorAccommodation) {
+      setSupervisorAccommodation(e.target.checked);
+    }
+  };
+
+  const handleSupervisorLunchChange = (e) => {
+    const currentTotal = totalSelectedLunch();
+
+    if (currentTotal < 2 || supervisorLunch) {
+      setSupervisorLunch(e.target.checked);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    if (validateForm()) {
+      // Simulate API call
+      setPopup({
+        visible: true,
+        type: "loading",
+        message: "Submitting form...",
+      });
+
+      setTimeout(() => {
+        setPopup({
+          visible: true,
+          type: "success",
+          message: "Form submitted successfully!",
+        });
+        resetForm();
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setPopup({ visible: false, type: "", message: "" });
+        }, 5000);
+      }, 2000);
+
+      // do not pass id with members
+      // const membersNew = members.map(({ id, ...rest }) => rest);
+
+      // const data = {
+      //   projTitle: projectTitle,
+      //   projCategory: projectCategory,
+      //   projOtherCategory: otherCategory,
+      //   projTrack: projectTrack,
+      //   projOtherTrack: otherTrack,
+      //   projPrototype: showPrototypeInput,
+      //   projPrototypeDim: prototypeDimensions,
+      //   projAbstract: projectAbstract,
+      //   MembersInfo: membersNew,
+      //   University: university,
+      //   Faculty: faculty,
+      //   Year: year,
+      //   LeaderEmail: teamLeaderEmail,
+      //   LeaderPhone: teamLeaderWhatsApp,
+      // };
+
+      // const formData = new FormData();
+      // formData.append("projProposal", projectProposal);
+      // formData.append("data", JSON.stringify(data));
+
+      // registerpregradproject(formData).then((res) => {
+      //   console.log(res);
+      // alert("Form submitted successfully!");
+      // setIsSubmitting(false);
+      // }).catch((err) => {
+      //   console.log(err);
+      //   setIsSubmitting(false);
+      //   alert("An error occurred. Please try again later.");
+      // });
+
+      // resetForm();
+    } else {
+      setIsSubmitting(false);
+      console.log(errors);
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setProjectTitle("");
+    setProjectCategory("");
+    setOtherCategory("");
+    setHasPrototype(false);
+    setPrototypeDimensions("");
+    setProjectAbstract("");
+    setEducationalAdministration("");
+    setSchool("");
+    setMembers([
+      {
+        id: 1,
+        name: "",
+        phone: "",
+        email: "",
+        nationalId: "",
+        accommodation: false,
+        lunch: false,
+      },
+    ]);
+    setSupervisorName("");
+    setSupervisorPhone("");
+    setSupervisorEmail("");
+    setSupervisorNationalId("");
+    setSupervisorAccommodation(false);
+    setSupervisorLunch(false);
+    setProjectProposal(null);
+    setErrors({});
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Project Title
+    if (!projectTitle.trim()) {
+      newErrors.projectTitle = "Project title is required.";
+    } else if (!validateName(projectTitle)) {
+      newErrors.projectTitle =
+        "Project title must be at least 3 letters from A-Z.";
+    }
+
+    if (hasPrototype && !prototypeDimensions.trim()) {
+      newErrors.prototypeDimensions = "Prototype dimensions are required.";
+    }
+
+    if (!projectProposal)
+      newErrors.projectProposal = "Project proposal is required.";
+
+    if (
+      projectProposal &&
+      ![
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(projectProposal.type)
+    ) {
+      newErrors.projectProposal =
+        "Invalid file type. Please upload a PDF, DOC, or DOCX file.";
+    }
+
+    if (projectProposal && projectProposal.size > 25 * 1024 * 1024) {
+      newErrors.projectProposal = "File size exceeds 25 MB.";
+    }
+
+    if (!projectCategory)
+      newErrors.projectCategory = "Project category is required.";
+    if (projectCategory === "Other" && !validateName(otherCategory)) {
+      newErrors.otherCategory =
+        "Please specify the category (at least 3 letters).";
+    }
+
+    if (!projectAbstract.trim()) {
+      newErrors.projectAbstract = "Project abstract is required.";
+    }
+
+    if (!educationalAdministration)
+      newErrors.educationalAdministration =
+        "Educational administration is required.";
+
+    if (!school)
+      newErrors.school = "School is required.";
+
+    // Members Validation
+    members.forEach((member, index) => {
+      if (!validateName(member.name))
+        newErrors[`member${index + 1}Name`] = `Member ${
+          index + 1
+        } name must be at least 3 characters long.`;
+      if (!validateEgyptianPhoneNumber(member.phone))
+        newErrors[
+          `member${index + 1}Phone`
+        ] = `Invalid phone number for member ${index + 1}.`;
+      if (!validateEmail(member.email))
+        newErrors[
+          `member${index + 1}Email`
+        ] = `Invalid email format for member ${index + 1}.`;
+      if (!validateNationalId(member.nationalId))
+        newErrors[
+          `member${index + 1}NationalId`
+        ] = `Invalid national ID for member ${index + 1}.`;
+    });
+
+    if (!validateName(supervisorName))
+      newErrors.supervisorName =
+        "Supervisor name must be at least 3 characters long.";
+    if (!validateEgyptianPhoneNumber(supervisorPhone))
+      newErrors.supervisorPhone = "Invalid Egyptian phone number.";
+    if (!validateEmail(supervisorEmail))
+      newErrors.supervisorEmail = "Invalid email format.";
+
+    if (supervisorEmail && !validateEmail(supervisorEmail))
+      newErrors.supervisorEmail = "Invalid email format.";
+    if (!validateNationalId(supervisorNationalId))
+      newErrors.supervisorNationalId = "Invalid national ID.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  return (
+    <motion.div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: colors.warmNeutral }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+    >
+      {/* Floating Icons */}
+      <FloatingIcons />
 
       {/* Gradient overlay */}
       <div
@@ -325,6 +470,7 @@ const TechnicalFormSubmission = () => {
           Technical Projects Form
         </motion.h2>
 
+        {/* Divider */}
         <motion.div
           className="h-1 w-24 mx-auto mb-8"
           style={{
@@ -380,7 +526,10 @@ const TechnicalFormSubmission = () => {
               color: colors.darkNeutral,
             }}
             value={projectCategory}
-            onChange={(e) => setProjectCategory(e.target.value)}
+            onChange={(e) => {
+              setProjectCategory(e.target.value);
+              setOtherCategory("");
+            }}
             required
           >
             <option value="">Select Category</option>
@@ -437,7 +586,10 @@ const TechnicalFormSubmission = () => {
                 className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
                 style={{ color: colors.primary }}
                 checked={hasPrototype}
-                onChange={(e) => setHasPrototype(e.target.checked)}
+                onChange={(e) => {
+                  setHasPrototype(e.target.checked);
+                  setPrototypeDimensions("");
+                }}
               />
               <span className="ml-2" style={{ color: colors.darkNeutral }}>
                 Yes
@@ -467,6 +619,11 @@ const TechnicalFormSubmission = () => {
               />
             </motion.div>
           )}
+          {errors.prototypeDimensions && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.prototypeDimensions}
+            </p>
+          )}
         </motion.div>
 
         {/* Project Abstract */}
@@ -493,6 +650,46 @@ const TechnicalFormSubmission = () => {
           {errors.projectAbstract && (
             <p className="text-sm text-red-500 mt-1">
               {errors.projectAbstract}
+            </p>
+          )}
+        </motion.div>
+
+        {/* Upload Project Proposal */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          <label
+            className="block text-sm font-medium mb-1"
+            style={{ color: colors.darkNeutral }}
+          >
+            Upload Project Proposal *
+          </label>
+          <div
+            className="flex items-center justify-center w-full border-2 border-dashed rounded-lg p-6 transition-all"
+            style={{
+              borderColor: colors.lightGreen + "77",
+              backgroundColor: colors.warmNeutral,
+            }}
+          >
+            <input
+              type="file"
+              className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[transparent] file:text-[#72B27D] hover:file:bg-[#72B27D] hover:file:text-white transition-all"
+              style={{
+                color: colors.lightGreen,
+              }}
+              accept=".pdf, .doc, .docx"
+              onChange={(e) => setProjectProposal(e.target.files[0])}
+              required
+            />
+          </div>
+          <p className="mt-2 text-sm" style={{ color: colors.darkNeutral }}>
+            Max 25 MB
+          </p>
+          {errors.projectProposal && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.projectProposal}
             </p>
           )}
         </motion.div>
@@ -563,16 +760,22 @@ const TechnicalFormSubmission = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.3 }}
-          style={{ borderTop: `2px solid ${colors.lightGreen}` }}
+          style={{
+            borderTop: `2px solid ${colors.lighterPurple}`,
+            textAlign: "left",
+          }}
         >
-          Note: Free accommodation is only available for 2 members.
+          All Team members transportation are covered.
+          <br />
+          If you are not studying at Aswan University: Only 2 members will have
+          accommodation.
         </motion.div>
 
         {/* Members Details */}
         {members.map((member, index) => (
           <motion.div
             key={member.id}
-            className="space-y-4 pt-4"
+            className="space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 + index * 0.1 }}
@@ -705,18 +908,30 @@ const TechnicalFormSubmission = () => {
                     checked={member.accommodation}
                     onChange={() => handleAccommodationChange(index)}
                     disabled={
-                      !member.accommodation &&
-                      members.filter((m) => m.accommodation).length >= 2
+                      !member.accommodation && totalSelectedAccommodation() >= 2
                     }
                   />
                   <span className="ml-2" style={{ color: colors.darkNeutral }}>
                     Accommodation (free for 2 members)
                   </span>
                 </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
+                    style={{ color: colors.primary }}
+                    checked={member.lunch}
+                    onChange={() => handleLunchChange(index)}
+                    disabled={!member.lunch && totalSelectedLunch() >= 2}
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Lunch (free for 2 members)
+                  </span>
+                </label>
               </div>
             </div>
 
-            {/* Remove Member Button*/}
+            {/* Remove Member Button */}
             {index >= 1 && (
               <button
                 type="button"
@@ -875,10 +1090,27 @@ const TechnicalFormSubmission = () => {
                   className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
                   style={{ color: colors.primary }}
                   checked={supervisorAccommodation}
-                  onChange={(e) => setSupervisorAccommodation(e.target.checked)}
+                  onChange={handleSupervisorAccommodationChange}
+                  disabled={
+                    !supervisorAccommodation &&
+                    totalSelectedAccommodation() >= 2
+                  }
                 />
                 <span className="ml-2" style={{ color: colors.darkNeutral }}>
-                  Accommodation
+                  Accommodation (free for 2 members)
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-5 w-5 rounded hover:border-[#72B27D] hover:shadow-md"
+                  style={{ color: colors.primary }}
+                  checked={supervisorLunch}
+                  onChange={handleSupervisorLunchChange}
+                  disabled={!supervisorLunch && totalSelectedLunch() >= 2}
+                />
+                <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                  Lunch (free for 2 members)
                 </span>
               </label>
             </div>
@@ -902,15 +1134,17 @@ const TechnicalFormSubmission = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring" }}
         >
-          Submit
+          {isSubmitting ? <ClipLoader color={"#fff"} size={18} /> : "Submit"}
         </motion.button>
       </motion.form>
+
       {/* Popup */}
       {popup.visible && (
         <Popup
           type={popup.type}
           message={popup.message}
           onClose={() => setPopup({ visible: false, type: "", message: "" })}
+          isLoading={popup.type === "loading"}
         />
       )}
     </motion.div>

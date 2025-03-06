@@ -1,5 +1,55 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+// import { registerpregradproject } from "../../../../services/register.service";
+import ClipLoader from "react-spinners/ClipLoader";
+
+// Floating Icons Component
+const FloatingIcons = React.memo(() => {
+  return (
+    <>
+      {/* Floating Abstract Shapes */}
+      {Array.from({ length: 16 }).map((_, i) => {
+        const size = Math.random() * 80 + 50;
+        const color = `rgba(59, 130, 246, ${Math.random() * 0.5 + 0.3})`;
+
+        return (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              opacity: 0.4,
+            }}
+            animate={{
+              scale: [1, 1.5, 1],
+              rotate: [0, 30, -30, 0],
+              opacity: [0.6, 0.3, 0.6],
+              filter: ["blur(2px)", "blur(6px)", "blur(2px)"],
+              x: [0, 40, -40, 0],
+              y: [0, -40, 40, 0],
+            }}
+            transition={{
+              duration: Math.random() * 4 + 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 3,
+            }}
+          >
+            <div
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: color,
+                borderRadius: "50%",
+              }}
+            ></div>
+          </motion.div>
+        );
+      })}
+    </>
+  );
+});
 
 const universities = [
   "Aswan University",
@@ -27,37 +77,6 @@ const colors = {
   darkNeutral: "#2C3E4A",
 };
 
-const trackOptions = {
-  "Information and Communications Technology": [
-    "Communication",
-    "Software Engineering",
-    "Computer Vision",
-    "Embedded Systems",
-    "IoT",
-  ],
-  "Power and Green Environment": [
-    "Power Technologies",
-    "Green Energy",
-    "Water Treatment Solutions",
-    "Sustainable Cities",
-    "Food Security",
-  ],
-  "Civil Engineering": [
-    "Structural Engineering",
-    "Geotechnical Engineering",
-    "Transportation Engineering",
-    "Environmental Engineering",
-    "Construction Management",
-  ],
-  "Architecture Engineering": [
-    "Urban Design",
-    "Sustainable Architecture",
-    "Interior Design",
-    "Landscape Architecture",
-    "Historic Preservation",
-  ],
-};
-
 const ProjectSubmissionForm = () => {
   const [projectTitle, setProjectTitle] = useState("");
   const [projectCategory, setProjectCategory] = useState("");
@@ -69,8 +88,8 @@ const ProjectSubmissionForm = () => {
   const [showPrototypeInput, setShowPrototypeInput] = useState(false);
   const [prototypeDimensions, setPrototypeDimensions] = useState("");
   const [projectAbstract, setProjectAbstract] = useState("");
-  const [educationalAdministration, setEducationalAdministration] =
-    useState("");
+  const [projectProposal, setProjectProposal] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [university, setUniversity] = useState("");
   const [faculty, setFaculty] = useState("");
   const [year, setYear] = useState("");
@@ -83,6 +102,7 @@ const ProjectSubmissionForm = () => {
       nationalId: "",
       accommodation: false,
       lunch: false,
+      isLeader: true, // First member is the leader
     },
     {
       id: 2,
@@ -92,6 +112,7 @@ const ProjectSubmissionForm = () => {
       nationalId: "",
       accommodation: false,
       lunch: false,
+      isLeader: false,
     },
   ]);
   const [teamLeaderEmail, setTeamLeaderEmail] = useState("");
@@ -104,7 +125,7 @@ const ProjectSubmissionForm = () => {
   });
 
   // Popup Component
-  const Popup = ({ type, message, onClose }) => {
+  const Popup = ({ type, message, onClose, isLoading }) => {
     const popupStyles = {
       success: {
         backgroundColor: colors.primary,
@@ -113,6 +134,10 @@ const ProjectSubmissionForm = () => {
       error: {
         backgroundColor: "#f44336",
         borderColor: "#d32f2f",
+      },
+      loading: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkerBlue,
       },
     };
 
@@ -125,13 +150,22 @@ const ProjectSubmissionForm = () => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
       >
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          &times;
-        </button>
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <ClipLoader color={"#fff"} size={18} />
+            <span>{message}</span>
+          </div>
+        ) : (
+          <span>{message}</span>
+        )}
+        {!isLoading && (
+          <button
+            onClick={onClose}
+            className="ml-4 text-white hover:text-gray-200"
+          >
+            &times;
+          </button>
+        )}
       </motion.div>
     );
   };
@@ -155,6 +189,7 @@ const ProjectSubmissionForm = () => {
           nationalId: "",
           accommodation: false,
           lunch: false,
+          isLeader: false,
         },
       ]);
     }
@@ -201,9 +236,27 @@ const ProjectSubmissionForm = () => {
     // Project Title
     if (!projectTitle.trim()) {
       newErrors.projectTitle = "Project title is required.";
-    } else if (projectTitle.trim().length < 3) {
-      newErrors.projectTitle =
-        "Project title must be at least 3 characters long.";
+    }
+
+    if (!projectProposal)
+      newErrors.projectProposal = "Project proposal is required.";
+
+    // Check mime type
+    if (
+      projectProposal &&
+      ![
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(projectProposal.type)
+    ) {
+      newErrors.projectProposal =
+        "Invalid file type. Please upload a PDF, DOC, or DOCX file.";
+    }
+
+    // Check file size
+    if (projectProposal && projectProposal.size > 25 * 1024 * 1024) {
+      newErrors.projectProposal = "File size exceeds 25 MB.";
     }
 
     // Project Category
@@ -214,19 +267,35 @@ const ProjectSubmissionForm = () => {
     }
 
     // Project Track
-    const categoriesWithTracks = [
-      "Information and Communications Technology",
-      "Power and Green Environment",
-    ];
-    if (categoriesWithTracks.includes(projectCategory) && !projectTrack) {
-      newErrors.projectTrack = "Project track is required.";
-    } else if (
-      projectTrack === "Other" &&
-      categoriesWithTracks.includes(projectCategory) &&
-      !otherTrack.trim()
+    if (
+      projectCategory !== "Civil Engineering" &&
+      projectCategory !== "Architecture Engineering" &&
+      !projectTrack
     ) {
+      newErrors.projectTrack = "Project track is required.";
+    } else if (projectTrack === "Other" && !otherTrack.trim()) {
       newErrors.otherTrack = "Please specify the track.";
     }
+
+    // Prototype Dimensions
+    if (showPrototypeInput && !prototypeDimensions.trim())
+      newErrors.prototypeDimensions = "Prototype dimensions are required.";
+
+    // Project Abstract
+    if (!projectAbstract.trim()) {
+      newErrors.projectAbstract = "Project abstract is required.";
+    } else if (projectAbstract.length < 5) {
+      newErrors.projectAbstract =
+        "Project abstract must be at least 5 characters long.";
+    }
+
+    // University
+    if (!university.trim()) newErrors.university = "University is required.";
+
+    // Faculty
+    if (!faculty.trim()) newErrors.faculty = "Faculty is required.";
+
+    if (!year) newErrors.year = "Year is required."
 
     // Members Validation
     members.forEach((member, index) => {
@@ -263,7 +332,7 @@ const ProjectSubmissionForm = () => {
     setShowPrototypeInput(false);
     setPrototypeDimensions("");
     setProjectAbstract("");
-    setEducationalAdministration("");
+    setProjectProposal(null);
     setUniversity("");
     setFaculty("");
     setYear("");
@@ -276,6 +345,7 @@ const ProjectSubmissionForm = () => {
         nationalId: "",
         accommodation: false,
         lunch: false,
+        isLeader: true,
       },
       {
         id: 2,
@@ -285,6 +355,7 @@ const ProjectSubmissionForm = () => {
         nationalId: "",
         accommodation: false,
         lunch: false,
+        isLeader: false,
       },
     ]);
     setTeamLeaderEmail("");
@@ -294,19 +365,66 @@ const ProjectSubmissionForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (validateForm()) {
+      // Simulate API call
       setPopup({
         visible: true,
-        type: "success",
-        message: "Form submitted successfully!",
+        type: "loading",
+        message: "Submitting form...",
       });
 
-      resetForm();
-
       setTimeout(() => {
-        setPopup({ visible: false, type: "", message: "" });
-      }, 5000);
+        setPopup({
+          visible: true,
+          type: "success",
+          message: "Form submitted successfully!",
+        });
+        resetForm();
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setPopup({ visible: false, type: "", message: "" });
+        }, 5000);
+      }, 2000);
+
+      // do not pass id with members
+      // const membersNew = members.map(({ id, ...rest }) => rest);
+
+      // const data = {
+      //   projTitle: projectTitle,
+      //   projCategory: projectCategory,
+      //   projOtherCategory: otherCategory,
+      //   projTrack: projectTrack,
+      //   projOtherTrack: otherTrack,
+      //   projPrototype: showPrototypeInput,
+      //   projPrototypeDim: prototypeDimensions,
+      //   projAbstract: projectAbstract,
+      //   MembersInfo: membersNew,
+      //   University: university,
+      //   Faculty: faculty,
+      //   Year: year,
+      //   LeaderEmail: teamLeaderEmail,
+      //   LeaderPhone: teamLeaderWhatsApp,
+      // };
+
+      // const formData = new FormData();
+      // formData.append("projProposal", projectProposal);
+      // formData.append("data", JSON.stringify(data));
+
+      // registerpregradproject(formData).then((res) => {
+      //   console.log(res);
+      // alert("Form submitted successfully!");
+      // setIsSubmitting(false);
+      // }).catch((err) => {
+      //   console.log(err);
+      //   setIsSubmitting(false);
+      //   alert("An error occurred. Please try again later.");
+      // });
+
+      // resetForm();
     } else {
+      setIsSubmitting(false);
       console.log(errors);
     }
   };
@@ -319,86 +437,8 @@ const ProjectSubmissionForm = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
     >
-      {/* Floating Abstract Shapes */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const size = Math.random() * 80 + 50;
-        const color = `rgba(59, 130, 246, ${Math.random() * 0.5 + 0.3})`;
-
-        return (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: 0.4,
-            }}
-            animate={{
-              scale: [1, 1.5, 1],
-              rotate: [0, 30, -30, 0],
-              opacity: [0.6, 0.3, 0.6],
-              filter: ["blur(2px)", "blur(6px)", "blur(2px)"],
-              x: [0, 40, -40, 0],
-              y: [0, -40, 40, 0],
-            }}
-            transition={{
-              duration: Math.random() * 4 + 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 3,
-            }}
-          >
-            <div
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                backgroundColor: color,
-                borderRadius: "50%",
-              }}
-            ></div>
-          </motion.div>
-        );
-      })}
-
-      {/* Floating Glowing Orbs */}
-      {Array.from({ length: 12 }).map((_, i) => {
-        const size = Math.random() * 40 + 20;
-        const color = `#58B3DC, ${Math.random() * 0.5 + 0.3})`;
-
-        return (
-          <motion.div
-            key={i}
-            className="absolute"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: 0.3,
-            }}
-            animate={{
-              scale: [0.8, 1.6, 0.8],
-              opacity: [0.5, 0.2, 0.5],
-              filter: ["blur(3px)", "blur(8px)", "blur(3px)"],
-              x: [0, 30, -30, 0],
-              y: [0, -30, 30, 0],
-            }}
-            transition={{
-              duration: Math.random() * 4 + 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: Math.random() * 2,
-            }}
-          >
-            <div
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                backgroundColor: color,
-                borderRadius: "50%",
-              }}
-            ></div>
-          </motion.div>
-        );
-      })}
+      {/* Floating Icons */}
+      <FloatingIcons />
 
       {/* Gradient overlay */}
       <div
@@ -484,6 +524,7 @@ const ProjectSubmissionForm = () => {
             onChange={(e) => {
               setProjectCategory(e.target.value);
               setShowOtherCategory(e.target.value === "Other");
+              setOtherCategory("");
             }}
             required
           >
@@ -523,15 +564,11 @@ const ProjectSubmissionForm = () => {
             </p>
           )}
         </motion.div>
-
         {/* Project Track */}
-        {projectCategory &&
-          [
-            "Information and Communications Technology",
-            "Power and Green Environment",
-          ].includes(projectCategory) && (
+        {projectCategory !== "Civil Engineering" &&
+          projectCategory !== "Architecture Engineering" && (
             <motion.div
-              initial={{ x: -20, opacity: 0 }}
+              initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
@@ -548,28 +585,42 @@ const ProjectSubmissionForm = () => {
                   color: colors.darkNeutral,
                 }}
                 value={projectTrack}
-                onChange={(e) => setProjectTrack(e.target.value)}
+                onChange={(e) => {
+                  setProjectTrack(e.target.value);
+                  setShowOtherTrack(e.target.value === "Other");
+                  setOtherTrack("");
+                }}
                 required
               >
                 <option value="">Select Track</option>
-                {trackOptions[projectCategory]?.map((track, index) => (
-                  <option key={index} value={track}>
-                    {track}
-                  </option>
-                ))}
+                {/* Dynamic Track Options Based on Category */}
+                {projectCategory ===
+                  "Information and Communications Technology" && (
+                  <>
+                    <option>Communication</option>
+                    <option>Software Engineering</option>
+                    <option>Computer Vision</option>
+                    <option>Embedded Systems</option>
+                    <option>IoT</option>
+                  </>
+                )}
+                {projectCategory === "Power and Green Environment" && (
+                  <>
+                    <option>Power Technologies</option>
+                    <option>Green Energy</option>
+                    <option>Water Treatment Solutions</option>
+                    <option>Sustainable Cities</option>
+                    <option>Food Security</option>
+                  </>
+                )}
                 <option value="Other">Other</option>
               </select>
-              {errors.projectTrack && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.projectTrack}
-                </p>
-              )}
-              {projectTrack === "Other" && (
+              {showOtherTrack && (
                 <motion.div
-                  className="mt-2"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.3 }}
+                  className="mt-2"
                 >
                   <input
                     type="text"
@@ -586,6 +637,11 @@ const ProjectSubmissionForm = () => {
                     </p>
                   )}
                 </motion.div>
+              )}
+              {errors.projectTrack && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.projectTrack}
+                </p>
               )}
             </motion.div>
           )}
@@ -608,7 +664,10 @@ const ProjectSubmissionForm = () => {
               className="form-checkbox h-5 w-5 rounded hover:border-[#58B3DC] hover:shadow-md"
               style={{ color: colors.lighterBlue }}
               checked={showPrototypeInput}
-              onChange={(e) => setShowPrototypeInput(e.target.checked)}
+              onChange={(e) => {
+                setShowPrototypeInput(e.target.checked);
+                setPrototypeDimensions("");
+              }}
             />
             <span style={{ color: colors.darkNeutral }}>
               Include Prototype Dimensions
@@ -692,13 +751,19 @@ const ProjectSubmissionForm = () => {
               style={{
                 color: colors.lighterBlue,
               }}
+              onChange={(e) => setProjectProposal(e.target.files[0])}
               accept=".pdf, .doc, .docx"
               required
             />
           </div>
           <p className="mt-2 text-sm" style={{ color: colors.darkNeutral }}>
-            Max 100 MB
+            Max 25 MB
           </p>
+          {errors.projectProposal && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.projectProposal}
+            </p>
+          )}
         </motion.div>
 
         {/* University */}
@@ -719,19 +784,19 @@ const ProjectSubmissionForm = () => {
               borderColor: colors.lighterBlue,
               color: colors.darkNeutral,
             }}
-            value={educationalAdministration}
-            onChange={(e) => setEducationalAdministration(e.target.value)}
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
             required
           >
             <option value="">Select university</option>
-            {universities.map((admin, index) => (
-              <option key={index}>{admin}</option>
+            {universities.map((uni, index) => (
+              <option key={index} value={uni}>
+                {uni}
+              </option>
             ))}
           </select>
-          {errors.educationalAdministration && (
-            <p className="text-sm text-red-500 mt-1">
-              {errors.educationalAdministration}
-            </p>
+          {errors.university && (
+            <p className="text-sm text-red-500 mt-1">{errors.university}</p>
           )}
         </motion.div>
 
@@ -802,16 +867,22 @@ const ProjectSubmissionForm = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.3 }}
-          style={{ borderTop: `2px solid ${colors.lighterBlue}` }}
+          style={{
+            borderTop: `2px solid ${colors.lighterBlue}`,
+            textAlign: "left",
+          }}
         >
-          Note: Free accommodation and lunch are only available for 2 members.
+          All Team members transportation are covered.
+          <br />
+          If you are not studying at Aswan University: Only 2 members will have
+          accommodation.
         </motion.div>
 
         {/* Members Details */}
         {members.map((member, index) => (
           <motion.div
             key={member.id}
-            className="space-y-4 pt-4"
+            className="space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 + index * 0.1 }}
@@ -823,7 +894,7 @@ const ProjectSubmissionForm = () => {
               }}
               whileHover={{ x: 5 }}
             >
-              Member #{index + 1}
+              {member.isLeader ? "Leader" : `Member #${index + 1}`}
             </motion.h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -928,12 +999,15 @@ const ProjectSubmissionForm = () => {
               </div>
             </div>
 
+            {/* Additional for Leader/Member */}
             <div>
               <label
                 className="block text-sm font-medium mb-1"
                 style={{ color: colors.darkNeutral }}
               >
-                Additional for Member #{index + 1}
+                {member.isLeader
+                  ? "Additional for Leader"
+                  : `Additional for Member #${index + 1}`}
               </label>
               <div className="space-y-2">
                 <label className="flex items-center">
@@ -971,7 +1045,7 @@ const ProjectSubmissionForm = () => {
               </div>
             </div>
 
-            {/* Remove Member Button*/}
+            {/* Remove Member Button */}
             {index >= 2 && (
               <button
                 type="button"
@@ -1007,68 +1081,6 @@ const ProjectSubmissionForm = () => {
           </motion.div>
         )}
 
-        {/* Contact Information - Team Leader */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="p-4 rounded-lg"
-          style={{ backgroundColor: colors.warmNeutral }}
-        >
-          <h3
-            className="text-xl font-semibold mb-4"
-            style={{ color: colors.darkNeutral }}
-          >
-            Contact Information - Team Leader
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                placeholder="Team leader's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={teamLeaderEmail}
-                onChange={(e) => setTeamLeaderEmail(e.target.value)}
-                required
-              />
-              {errors.teamLeaderEmail && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderEmail}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.darkNeutral }}
-              >
-                WhatsApp Number *
-              </label>
-              <input
-                type="tel"
-                placeholder="Team leader's WhatsApp"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#58B3DC] hover:shadow-md"
-                style={{ borderColor: colors.lighterBlue }}
-                value={teamLeaderWhatsApp}
-                onChange={(e) => setTeamLeaderWhatsApp(e.target.value)}
-                required
-              />
-              {errors.teamLeaderWhatsApp && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.teamLeaderWhatsApp}
-                </p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
         {/* Submit Button */}
         <motion.button
           type="submit"
@@ -1086,7 +1098,7 @@ const ProjectSubmissionForm = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring" }}
         >
-          Submit
+          {isSubmitting ? <ClipLoader color={"#fff"} size={18} /> : "Submit"}
         </motion.button>
       </motion.form>
 
@@ -1096,6 +1108,7 @@ const ProjectSubmissionForm = () => {
           type={popup.type}
           message={popup.message}
           onClose={() => setPopup({ visible: false, type: "", message: "" })}
+          isLoading={popup.type === "loading"}
         />
       )}
     </motion.div>

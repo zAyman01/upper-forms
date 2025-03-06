@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import ClipLoader from "react-spinners/ClipLoader";
+// import { registerschoolsproject } from "../../../../services/register.service";
 import {
   FaGraduationCap,
   FaSchool,
@@ -9,6 +11,7 @@ import {
   FaGlobe,
 } from "react-icons/fa";
 
+// Floating Icons Component
 const icons = [
   FaSchool,
   FaChalkboardTeacher,
@@ -18,247 +21,9 @@ const icons = [
   FaGraduationCap,
 ];
 
-
-const colors = {
-  primary: "#937DB2",
-  darkerPurple: "#6A5A7E",
-  lighterPurple: "#B9A8D1",
-  warmNeutral: "#F0EAF5",
-  accentPurple: "#A88FC7",
-  darkNeutral: "#3E3648",
-};
-const educationalAdministrations = [
-  "Aswan",
-  "Luxor",
-  "Qena",
-  "Sohag",
-  "Assiut",
-  "Minia",
-  "Beni Suef",
-  "Fayoum",
-];
-
-const SchoolProjectForm = () => {
-  const [projectTitle, setProjectTitle] = useState("");
-  const [projectCategory, setProjectCategory] = useState("");
-  const [showOtherCategory, setShowOtherCategory] = useState(false);
-  const [otherCategory, setOtherCategory] = useState("");
-  const [showPrototypeInput, setShowPrototypeInput] = useState(false);
-  const [prototypeDimensions, setPrototypeDimensions] = useState("");
-  const [projectAbstract, setProjectAbstract] = useState("");
-  const [educationalLevel, setEducationalLevel] = useState("");
-  const [educationalAdministration, setEducationalAdministration] =
-    useState("");
-  const [schoolName, setSchoolName] = useState("");
-  const [members, setMembers] = useState([
-    { name: "", phone: "", email: "", nationalId: "" },
-  ]);
-  const [supervisorName, setSupervisorName] = useState("");
-  const [supervisorPhone, setSupervisorPhone] = useState("");
-  const [supervisorEmail, setSupervisorEmail] = useState("");
-  const [supervisorNationalId, setSupervisorNationalId] = useState("");
-  const [supervisorAccommodation, setSupervisorAccommodation] = useState(false);
-  const [supervisorLunch, setSupervisorLunch] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [popup, setPopup] = useState({
-    visible: false,
-    type: "success",
-    message: "",
-  });
-
-  // Popup Component
-  const Popup = ({ type, message, onClose }) => {
-    const popupStyles = {
-      success: {
-        backgroundColor: colors.primary,
-        borderColor: colors.darkGreen,
-      },
-      error: {
-        backgroundColor: "#f44336",
-        borderColor: "#d32f2f",
-      },
-    };
-
-    return (
-      <motion.div
-        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
-        style={popupStyles[type]}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3 }}
-      >
-        <span>{message}</span>
-        <button
-          onClick={onClose}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          &times;
-        </button>
-      </motion.div>
-    );
-  };
-
-  // Validation functions
-  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
-  const validateEgyptianPhoneNumber = (phone) =>
-    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validateNationalId = (id) => /^\d{14}$/.test(id);
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Project Title
-    if (!projectTitle.trim()) {
-      newErrors.projectTitle = "Project title is required.";
-    } else if (!validateName(projectTitle)) {
-      newErrors.projectTitle = "Project title must be at least 3 letters.";
-    }
-
-    // Project Category
-    if (!projectCategory)
-      newErrors.projectCategory = "Project category is required.";
-    if (projectCategory === "Other" && !validateName(otherCategory)) {
-      newErrors.otherCategory =
-        "Please specify the category (at least 3 letters).";
-    }
-
-    // Prototype Dimensions
-    if (showPrototypeInput && !prototypeDimensions.trim()) {
-      newErrors.prototypeDimensions = "Prototype dimensions are required.";
-    }
-
-    // Project Abstract
-    if (!projectAbstract.trim()) {
-      newErrors.projectAbstract = "Project abstract is required.";
-    } else if (projectAbstract.length < 10) {
-      newErrors.projectAbstract =
-        "Project abstract must be at least 10 characters long.";
-    }
-
-    // Educational Level
-    if (!educationalLevel) {
-      newErrors.educationalLevel = "Educational level is required.";
-    }
-
-    // Educational Administration
-    if (!educationalAdministration) {
-      newErrors.educationalAdministration =
-        "Educational administration is required.";
-    }
-
-    // School Name
-    if (!validateName(schoolName))
-      newErrors.schoolName =
-        "School is required and must be at least 3 letters.";
-
-    // Members
-    members.forEach((member, index) => {
-      if (!validateName(member.name))
-        newErrors[`member${index + 1}Name`] = `Member ${
-          index + 1
-        } name must be at least 3 letters.`;
-      if (!validateEgyptianPhoneNumber(member.phone))
-        newErrors[
-          `member${index + 1}Phone`
-        ] = `Invalid phone number for member ${index + 1}.`;
-      if (!validateEmail(member.email))
-        newErrors[
-          `member${index + 1}Email`
-        ] = `Invalid email format for member ${index + 1}.`;
-      if (!validateNationalId(member.nationalId))
-        newErrors[
-          `member${index + 1}NationalId`
-        ] = `Invalid national ID for member ${index + 1}.`;
-    });
-
-
-    // Supervisor
-    if (!validateName(supervisorName))
-      newErrors.supervisorName = "Supervisor name must be at least 3 letters.";
-    if (!validateEgyptianPhoneNumber(supervisorPhone))
-      newErrors.supervisorPhone = "Invalid Egyptian phone number.";
-    if (supervisorEmail && !validateEmail(supervisorEmail))
-      newErrors.supervisorEmail = "Invalid email format.";
-    if (!validateNationalId(supervisorNationalId))
-      newErrors.supervisorNationalId = "Invalid national ID.";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      setPopup({
-        visible: true,
-        type: "success",
-        message: "Form submitted successfully!",
-      });
-
-      resetForm();
-
-      setTimeout(() => {
-        setPopup({ visible: false, type: "", message: "" });
-      }, 5000);
-    } else {
-      console.log(errors);
-    }
-  };
-
-  const resetForm = () => {
-    setProjectTitle("");
-    setProjectCategory("");
-    setShowOtherCategory(false);
-    setOtherCategory("");
-    setShowPrototypeInput(false);
-    setPrototypeDimensions("");
-    setProjectAbstract("");
-    setEducationalLevel("");
-    setEducationalAdministration("");
-    setSchoolName("");
-    setMembers([{ name: "", phone: "", email: "", nationalId: "" }]);
-    setSupervisorName("");
-    setSupervisorPhone("");
-    setSupervisorEmail("");
-    setSupervisorNationalId("");
-    setSupervisorAccommodation(false);
-    setSupervisorLunch(false);
-    setErrors({});
-  };
-
-  const addMember = () => {
-    if (members.length < 5) {
-      setMembers([
-        ...members,
-        { name: "", phone: "", email: "", nationalId: "" },
-      ]);
-    }
-  };
-
-  const removeMember = (index) => {
-    if (members.length > 1) {
-      const newMembers = members.filter((_, i) => i !== index);
-      setMembers(newMembers);
-    }
-  };
-
-  const handleMemberChange = (index, field, value) => {
-    const newMembers = [...members];
-    newMembers[index][field] = value;
-    setMembers(newMembers);
-  };
-
+const FloatingIcons = React.memo(() => {
   return (
-    <motion.div
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: colors.warmNeutral }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-    >
-      {/* Floating School Icons */}
+    <>
       {Array.from({ length: 16 }).map((_, i) => {
         const Icon = icons[i % icons.length];
         const size = Math.random() * 60 + 30;
@@ -271,7 +36,7 @@ const SchoolProjectForm = () => {
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              opacity: 0.6,
+              opacity: 0.8,
               color,
             }}
             animate={{
@@ -293,8 +58,431 @@ const SchoolProjectForm = () => {
           </motion.div>
         );
       })}
+    </>
+  );
+});
 
-      {/* Gradient overlay */}
+// Main Form Component
+const educationalAdministrations = [
+  "Aswan",
+  "Luxor",
+  "Qena",
+  "Sohag",
+  "Assiut",
+  "Minia",
+  "Beni Suef",
+  "Fayoum",
+];
+
+const colors = {
+  primary: "#937DB2",
+  darkerPurple: "#6A5A7E",
+  lighterPurple: "#B9A8D1",
+  warmNeutral: "#F0EAF5",
+  accentPurple: "#A88FC7",
+  darkNeutral: "#3E3648",
+};
+
+const SchoolProjectForm = () => {
+  const [projectTitle, setProjectTitle] = useState("");
+  const [projectCategory, setProjectCategory] = useState("");
+  const [showOtherCategory, setShowOtherCategory] = useState(false);
+  const [otherCategory, setOtherCategory] = useState("");
+  const [showPrototypeInput, setShowPrototypeInput] = useState(false);
+  const [projectProposal, setProjectProposal] = useState(null);
+  const [prototypeDimensions, setPrototypeDimensions] = useState("");
+  const [projectAbstract, setProjectAbstract] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [educationalLevel, setEducationalLevel] = useState("");
+  const [educationalAdministration, setEducationalAdministration] =
+    useState("");
+  const [schoolName, setSchoolName] = useState("");
+  const [members, setMembers] = useState([
+    {
+      id: 1,
+      name: "",
+      phone: "",
+      email: "",
+      nationalId: "",
+      accommodation: false,
+      lunch: false,
+    },
+  ]);
+  const [supervisorName, setSupervisorName] = useState("");
+  const [supervisorPhone, setSupervisorPhone] = useState("");
+  const [supervisorEmail, setSupervisorEmail] = useState("");
+  const [supervisorNationalId, setSupervisorNationalId] = useState("");
+  const [supervisorAccommodation, setSupervisorAccommodation] = useState(false);
+  const [supervisorLunch, setSupervisorLunch] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [popup, setPopup] = useState({
+    visible: false,
+    type: "success",
+    message: "",
+  });
+
+  // Validation functions
+  const validateName = (name) => /^[A-Za-z ]{3,}$/.test(name.trim());
+  const validateEgyptianPhoneNumber = (phone) =>
+    /^01[0-2,5]{1}[0-9]{8}$/.test(phone);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateNationalId = (id) => /^\d{14}$/.test(id);
+
+  const handleFileChange = (e) => {
+    setProjectProposal(e.target.files[0]);
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Project Title
+    if (!projectTitle.trim()) {
+      newErrors.projectTitle = "Project title is required.";
+    } else if (!validateName(projectTitle)) {
+      newErrors.projectTitle =
+        "Project title must be at least 3 letters from A-Z.";
+    }
+
+    if (!projectProposal)
+      newErrors.projectProposal = "Project proposal is required.";
+
+    // Check mime type
+    if (
+      projectProposal &&
+      ![
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ].includes(projectProposal.type)
+    ) {
+      newErrors.projectProposal =
+        "Invalid file type. Please upload a PDF, DOC, or DOCX file.";
+    }
+
+    // Check file size
+    if (projectProposal && projectProposal.size > 25 * 1024 * 1024) {
+      newErrors.projectProposal = "File size exceeds 25 MB.";
+    }
+
+    // Project Category
+    if (!projectCategory)
+      newErrors.projectCategory = "Project category is required.";
+    if (projectCategory === "Other" && !validateName(otherCategory)) {
+      newErrors.otherCategory =
+        "Please specify the category (at least 3 letters).";
+    }
+
+    // Prototype Dimensions
+    if (showPrototypeInput && !prototypeDimensions.trim()) {
+      newErrors.prototypeDimensions = "Prototype dimensions are required.";
+    }
+
+    // Project Abstract
+    if (!projectAbstract.trim()) {
+      newErrors.projectAbstract = "Project abstract is required.";
+    }
+
+    // Educational Level
+    if (!educationalLevel) {
+      newErrors.educationalLevel = "Educational level is required.";
+    }
+
+    // Educational Administration
+    if (!educationalAdministration) {
+      newErrors.educationalAdministration =
+        "Educational administration is required.";
+    }
+
+    // School Name
+    if (!schoolName.trim()) {
+      newErrors.schoolName = "School name is required.";
+    }
+
+    // Members Validation
+    members.forEach((member, index) => {
+      if (!validateName(member.name)) {
+        newErrors[`member${index + 1}Name`] = `Member ${
+          index + 1
+        } name must be 3 characters long.`;
+      }
+      if (!validateEgyptianPhoneNumber(member.phone)) {
+        newErrors[
+          `member${index + 1}Phone`
+        ] = `Invalid phone number for member ${index + 1}.`;
+      }
+      if (!validateEmail(member.email)) {
+        newErrors[
+          `member${index + 1}Email`
+        ] = `Invalid email format for member ${index + 1}.`;
+      }
+      if (!validateNationalId(member.nationalId)) {
+        newErrors[
+          `member${index + 1}NationalId`
+        ] = `Invalid national ID for member ${index + 1}.`;
+      }
+    });
+
+    // Supervisor Validation
+    if (!validateName(supervisorName)) {
+      newErrors.supervisorName = "Supervisor name must be 3 characters long.";
+    }
+    if (!validateEgyptianPhoneNumber(supervisorPhone)) {
+      newErrors.supervisorPhone = "Invalid phone number for supervisor.";
+    }
+    if (!validateEmail(supervisorEmail)) {
+      newErrors.supervisorEmail = "Invalid email format for supervisor.";
+    }
+    if (!validateNationalId(supervisorNationalId)) {
+      newErrors.supervisorNationalId = "Invalid national ID for supervisor.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    if (validateForm()) {
+      // Simulate API call
+      setPopup({
+        visible: true,
+        type: "loading",
+        message: "Submitting form...",
+      });
+
+      setTimeout(() => {
+        setPopup({
+          visible: true,
+          type: "success",
+          message: "Form submitted successfully!",
+        });
+        resetForm();
+        setIsSubmitting(false);
+
+        setTimeout(() => {
+          setPopup({ visible: false, type: "", message: "" });
+        }, 5000);
+      }, 2000);
+
+      // do not pass id with members
+      // const membersNew = members.map(({ id, ...rest }) => rest);
+
+      // const data = {
+      //   projTitle: projectTitle,
+      //   projCategory: projectCategory,
+      //   projOtherCategory: otherCategory,
+      //   projTrack: projectTrack,
+      //   projOtherTrack: otherTrack,
+      //   projPrototype: showPrototypeInput,
+      //   projPrototypeDim: prototypeDimensions,
+      //   projAbstract: projectAbstract,
+      //   MembersInfo: membersNew,
+      //   University: university,
+      //   Faculty: faculty,
+      //   Year: year,
+      //   LeaderEmail: teamLeaderEmail,
+      //   LeaderPhone: teamLeaderWhatsApp,
+      // };
+
+      // const formData = new FormData();
+      // formData.append("projProposal", projectProposal);
+      // formData.append("data", JSON.stringify(data));
+
+      // registerpregradproject(formData).then((res) => {
+      //   console.log(res);
+      // alert("Form submitted successfully!");
+      // setIsSubmitting(false);
+      // }).catch((err) => {
+      //   console.log(err);
+      //   setIsSubmitting(false);
+      //   alert("An error occurred. Please try again later.");
+      // });
+
+      // resetForm();
+    } else {
+      setIsSubmitting(false);
+      console.log(errors);
+    }
+  };
+
+  const resetForm = () => {
+    setProjectTitle("");
+    setProjectCategory("");
+    setShowOtherCategory(false);
+    setOtherCategory("");
+    setShowPrototypeInput(false);
+    setProjectProposal(null);
+    setPrototypeDimensions("");
+    setProjectAbstract("");
+    setEducationalLevel("");
+    setEducationalAdministration("");
+    setSchoolName("");
+    setMembers([
+      {
+        id: 1,
+        name: "",
+        phone: "",
+        email: "",
+        nationalId: "",
+        accommodation: false,
+        lunch: false,
+      },
+    ]);
+    setSupervisorName("");
+    setSupervisorPhone("");
+    setSupervisorEmail("");
+    setSupervisorNationalId("");
+    setSupervisorAccommodation(false);
+    setSupervisorLunch(false);
+    setErrors({});
+  };
+
+  const addMember = () => {
+    if (members.length < 5) {
+      setMembers([
+        ...members,
+        {
+          id: members.length + 1,
+          name: "",
+          phone: "",
+          email: "",
+          nationalId: "",
+          accommodation: false,
+          lunch: false,
+        },
+      ]);
+    }
+  };
+
+  const removeMember = (id) => {
+    setMembers(members.filter((member) => member.id !== id));
+  };
+
+  const handleMemberChange = (index, field, value) => {
+    const updatedMembers = [...members];
+    updatedMembers[index][field] = value;
+    setMembers(updatedMembers);
+  };
+
+  const totalSelectedAccommodation = () => {
+    let total = 0;
+    members.forEach((member) => {
+      if (member.accommodation) total++;
+    });
+    if (supervisorAccommodation) total++;
+    return total;
+  };
+
+  const totalSelectedLunch = () => {
+    let total = 0;
+    members.forEach((member) => {
+      if (member.lunch) total++;
+    });
+    if (supervisorLunch) total++;
+    return total;
+  };
+
+  const handleAccommodationChange = (index) => {
+    const updatedMembers = [...members];
+    const currentTotal = totalSelectedAccommodation();
+
+    // Allow toggling if the total is less than 2 or if the current option is already selected
+    if (currentTotal < 2 || updatedMembers[index].accommodation) {
+      updatedMembers[index].accommodation =
+        !updatedMembers[index].accommodation;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleLunchChange = (index) => {
+    const updatedMembers = [...members];
+    const currentTotal = totalSelectedLunch();
+
+    // Allow toggling if the total is less than 2 or if the current option is already selected
+    if (currentTotal < 2 || updatedMembers[index].lunch) {
+      updatedMembers[index].lunch = !updatedMembers[index].lunch;
+      setMembers(updatedMembers);
+    }
+  };
+
+  const handleSupervisorAccommodationChange = (e) => {
+    const currentTotal = totalSelectedAccommodation();
+
+    // Allow toggling if the total is less than 2 or if the current option is already selected
+    if (currentTotal < 2 || supervisorAccommodation) {
+      setSupervisorAccommodation(e.target.checked);
+    }
+  };
+
+  const handleSupervisorLunchChange = (e) => {
+    const currentTotal = totalSelectedLunch();
+
+    // Allow toggling if the total is less than 2 or if the current option is already selected
+    if (currentTotal < 2 || supervisorLunch) {
+      setSupervisorLunch(e.target.checked);
+    }
+  };
+
+  // Popup Component
+  const Popup = ({ type, message, onClose, isLoading }) => {
+    const popupStyles = {
+      success: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkerPurple,
+      },
+      error: {
+        backgroundColor: "#f44336",
+        borderColor: "#d32f2f",
+      },
+      loading: {
+        backgroundColor: colors.primary,
+        borderColor: colors.darkerPurple,
+      },
+    };
+
+    return (
+      <motion.div
+        className="fixed top-4 right-4 p-4 rounded-lg shadow-lg text-white flex items-center justify-between z-50"
+        style={popupStyles[type]}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <ClipLoader color={"#fff"} size={18} />
+            <span>{message}</span>
+          </div>
+        ) : (
+          <span>{message}</span>
+        )}
+        {!isLoading && (
+          <button
+            onClick={onClose}
+            className="ml-4 text-white hover:text-gray-200"
+          >
+            &times;
+          </button>
+        )}
+      </motion.div>
+    );
+  };
+
+  return (
+    <motion.div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: colors.warmNeutral }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+    >
+      {/* Floating Icons */}
+      <FloatingIcons />
+
+      {/* Gradient Overlay */}
       <div
         className="absolute inset-0 opacity-50"
         style={{
@@ -324,7 +512,7 @@ const SchoolProjectForm = () => {
         <motion.div
           className="h-1 w-24 mx-auto mb-8"
           style={{
-            background: `linear-gradient(to right, ${colors.primary}, ${colors.accentPurple})`, // Updated gradient
+            background: `linear-gradient(to right, ${colors.primary}, ${colors.accentPurple})`,
           }}
           initial={{ width: 0 }}
           animate={{ width: "6rem" }}
@@ -346,7 +534,7 @@ const SchoolProjectForm = () => {
           <input
             type="text"
             placeholder="Enter project title"
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
             style={{
               borderColor: colors.lighterPurple,
               boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
@@ -373,7 +561,7 @@ const SchoolProjectForm = () => {
             Project Category فئه المشروع*
           </label>
           <select
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md"
             style={{
               borderColor: colors.lighterPurple,
               color: colors.darkNeutral,
@@ -382,6 +570,7 @@ const SchoolProjectForm = () => {
             onChange={(e) => {
               setProjectCategory(e.target.value);
               setShowOtherCategory(e.target.value === "Other");
+              if (e.target.value !== "Other") setOtherCategory("");
             }}
             required
           >
@@ -400,7 +589,7 @@ const SchoolProjectForm = () => {
               <input
                 type="text"
                 placeholder="Specify category"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={otherCategory}
                 onChange={(e) => setOtherCategory(e.target.value)}
@@ -435,10 +624,13 @@ const SchoolProjectForm = () => {
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
-              style={{ color: colors.lighterPurple }} // Updated checkbox color
+              className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md"
+              style={{ color: colors.lighterPurple }}
               checked={showPrototypeInput}
-              onChange={(e) => setShowPrototypeInput(e.target.checked)}
+              onChange={(e) => {
+                setShowPrototypeInput(e.target.checked);
+                setPrototypeDimensions("");
+              }}
             />
             <span style={{ color: colors.darkNeutral }}>
               Include Prototype Dimensions
@@ -454,7 +646,7 @@ const SchoolProjectForm = () => {
               <input
                 type="text"
                 placeholder="Enter prototype dimensions"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={prototypeDimensions}
                 onChange={(e) => setPrototypeDimensions(e.target.value)}
@@ -483,7 +675,7 @@ const SchoolProjectForm = () => {
           </label>
           <textarea
             placeholder="Describe your project"
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
             style={{ borderColor: colors.lighterPurple }}
             rows="4"
             value={projectAbstract}
@@ -513,7 +705,7 @@ const SchoolProjectForm = () => {
             className="flex items-center justify-center w-full border-2 border-dashed rounded-lg p-6 transition-all"
             style={{
               borderColor: colors.lighterPurple + "77",
-              backgroundColor: colors.warmNeutral, // Updated background color
+              backgroundColor: colors.warmNeutral,
             }}
           >
             <input
@@ -523,12 +715,18 @@ const SchoolProjectForm = () => {
                 color: colors.lighterPurple,
               }}
               accept=".pdf, .doc, .docx"
+              onChange={handleFileChange}
               required
             />
           </div>
           <p className="mt-2 text-sm" style={{ color: colors.darkNeutral }}>
-            Max 10 MB
+            Max 25 MB
           </p>
+          {errors.projectProposal && (
+            <p className="text-sm text-red-500 mt-1">
+              {errors.projectProposal}
+            </p>
+          )}
         </motion.div>
 
         {/* Educational Level */}
@@ -544,7 +742,7 @@ const SchoolProjectForm = () => {
             Educational Level المستوي التعليمي*
           </label>
           <select
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md"
             style={{
               borderColor: colors.lighterPurple,
               color: colors.darkNeutral,
@@ -578,7 +776,7 @@ const SchoolProjectForm = () => {
             Educational Administration الادارة التعليمية*
           </label>
           <select
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all hover:border-[#937DB2] hover:shadow-md"
             style={{
               borderColor: colors.lighterPurple,
               color: colors.darkNeutral,
@@ -614,7 +812,7 @@ const SchoolProjectForm = () => {
           <input
             type="text"
             placeholder="Enter school name"
-            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+            className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
             style={{ borderColor: colors.lighterPurple }}
             value={schoolName}
             onChange={(e) => setSchoolName(e.target.value)}
@@ -625,12 +823,28 @@ const SchoolProjectForm = () => {
           )}
         </motion.div>
 
+        {/* Red Note */}
+        <motion.div
+          className="text-center text-sm text-red-500 pt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.3 }}
+          style={{
+            borderTop: `2px solid ${colors.lighterPurple}`,
+            textAlign: "left",
+          }}
+        >
+          All Team members transportation are covered.
+          <br />
+          If you are not studying at Aswan University: Only 2 members will have
+          accommodation.
+        </motion.div>
+
         {/* Members */}
         {members.map((member, index) => (
           <motion.div
-            key={index}
-            className="space-y-4 pt-4"
-            style={{ borderTop: `2px solid ${colors.lighterPurple}` }}
+            key={member.id}
+            className="space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 + index * 0.1 }}
@@ -654,7 +868,7 @@ const SchoolProjectForm = () => {
                 <input
                   type="text"
                   placeholder="Enter member's name"
-                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                   style={{ borderColor: colors.lighterPurple }}
                   value={member.name}
                   onChange={(e) =>
@@ -678,7 +892,7 @@ const SchoolProjectForm = () => {
                 <input
                   type="tel"
                   placeholder="Enter member's phone number"
-                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                   style={{ borderColor: colors.lighterPurple }}
                   value={member.phone}
                   onChange={(e) =>
@@ -705,7 +919,7 @@ const SchoolProjectForm = () => {
                 <input
                   type="email"
                   placeholder="Enter member's email"
-                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                   style={{ borderColor: colors.lighterPurple }}
                   value={member.email}
                   onChange={(e) =>
@@ -729,7 +943,7 @@ const SchoolProjectForm = () => {
                 <input
                   type="text"
                   placeholder="Enter member's national ID"
-                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                  className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                   style={{ borderColor: colors.lighterPurple }}
                   value={member.nationalId}
                   onChange={(e) =>
@@ -745,11 +959,50 @@ const SchoolProjectForm = () => {
               </div>
             </div>
 
+            <div>
+              <label
+                className="block text-sm font-medium mb-1"
+                style={{ color: colors.darkNeutral }}
+              >
+                Additional for Member
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md"
+                    style={{ color: colors.lighterPurple }}
+                    checked={member.accommodation}
+                    onChange={() => handleAccommodationChange(index)}
+                    disabled={
+                      !member.accommodation && totalSelectedAccommodation() >= 2
+                    }
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Accommodation - السكن
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md"
+                    style={{ color: colors.lighterPurple }}
+                    checked={member.lunch}
+                    onChange={() => handleLunchChange(index)}
+                    disabled={!member.lunch && totalSelectedLunch() >= 2}
+                  />
+                  <span className="ml-2" style={{ color: colors.darkNeutral }}>
+                    Lunch - الغذاء
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {members.length > 1 && (
               <button
                 type="button"
                 className="text-sm text-red-500 hover:text-red-700"
-                onClick={() => removeMember(index)}
+                onClick={() => removeMember(member.id)}
               >
                 Remove Member
               </button>
@@ -763,13 +1016,13 @@ const SchoolProjectForm = () => {
             type="button"
             className="w-full py-2 text-sm font-semibold rounded-lg transition-all"
             style={{
-              background: `linear-gradient(to right, ${colors.primary}, ${colors.accentPurple})`, // Updated gradient
+              background: `linear-gradient(to right, ${colors.primary}, ${colors.accentPurple})`,
               color: "white",
             }}
             whileHover={{
               scale: 1.05,
               boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
-              background: `linear-gradient(to right, ${colors.accentPurple}, ${colors.primary})`, // Updated hover gradient
+              background: `linear-gradient(to right, ${colors.accentPurple}, ${colors.primary})`,
             }}
             whileTap={{ scale: 0.95 }}
             initial={{ y: 20, opacity: 0 }}
@@ -808,7 +1061,7 @@ const SchoolProjectForm = () => {
               <input
                 type="text"
                 placeholder="Enter supervisor's name"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={supervisorName}
                 onChange={(e) => setSupervisorName(e.target.value)}
@@ -830,7 +1083,7 @@ const SchoolProjectForm = () => {
               <input
                 type="tel"
                 placeholder="Enter supervisor's phone number"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={supervisorPhone}
                 onChange={(e) => setSupervisorPhone(e.target.value)}
@@ -855,7 +1108,7 @@ const SchoolProjectForm = () => {
               <input
                 type="email"
                 placeholder="Enter supervisor's email"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={supervisorEmail}
                 onChange={(e) => setSupervisorEmail(e.target.value)}
@@ -877,7 +1130,7 @@ const SchoolProjectForm = () => {
               <input
                 type="text"
                 placeholder="Enter supervisor's national ID"
-                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md" // Updated hover border color
+                className="w-full px-4 py-2 border rounded-lg outline-none transition-all placeholder:text-gray-300 hover:border-[#937DB2] hover:shadow-md"
                 style={{ borderColor: colors.lighterPurple }}
                 value={supervisorNationalId}
                 onChange={(e) => setSupervisorNationalId(e.target.value)}
@@ -905,7 +1158,11 @@ const SchoolProjectForm = () => {
                   className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md"
                   style={{ color: colors.lighterPurple }}
                   checked={supervisorAccommodation}
-                  onChange={(e) => setSupervisorAccommodation(e.target.checked)}
+                  onChange={handleSupervisorAccommodationChange}
+                  disabled={
+                    !supervisorAccommodation &&
+                    totalSelectedAccommodation() >= 2
+                  }
                 />
                 <span className="ml-2" style={{ color: colors.darkNeutral }}>
                   Accommodation - السكن
@@ -917,7 +1174,8 @@ const SchoolProjectForm = () => {
                   className="form-checkbox h-5 w-5 rounded hover:border-[#937DB2] hover:shadow-md"
                   style={{ color: colors.lighterPurple }}
                   checked={supervisorLunch}
-                  onChange={(e) => setSupervisorLunch(e.target.checked)}
+                  onChange={handleSupervisorLunchChange}
+                  disabled={!supervisorLunch && totalSelectedLunch() >= 2}
                 />
                 <span className="ml-2" style={{ color: colors.darkNeutral }}>
                   Lunch - الغذاء
@@ -926,7 +1184,6 @@ const SchoolProjectForm = () => {
             </div>
           </div>
         </motion.div>
-
         {/* Submit Button */}
         <motion.button
           type="submit"
@@ -944,15 +1201,17 @@ const SchoolProjectForm = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring" }}
         >
-          Submit
+          {isSubmitting ? <ClipLoader color={"#fff"} size={18} /> : "Submit"}
         </motion.button>
       </motion.form>
+
       {/* Popup */}
       {popup.visible && (
         <Popup
           type={popup.type}
           message={popup.message}
           onClose={() => setPopup({ visible: false, type: "", message: "" })}
+          isLoading={popup.type === "loading"}
         />
       )}
     </motion.div>
